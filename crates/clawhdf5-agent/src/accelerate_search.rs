@@ -239,7 +239,7 @@ pub fn accelerate_batch_norms(vectors_flat: &[f32], dim: usize) -> Vec<f32> {
 // ---------------------------------------------------------------------------
 
 #[cfg(target_os = "macos")]
-extern "C" {
+unsafe extern "C" {
     fn vDSP_dotpr(
         __A: *const f32,
         __IA: i32,
