@@ -155,6 +155,11 @@ impl WalFile {
     }
 
     /// Read all entries from the WAL (for replay on open).
+    ///
+    /// If the WAL is truncated or contains corrupt entries, the successfully
+    /// read prefix is returned and the remaining entries are silently skipped.
+    /// This prevents a partial write (e.g. crash mid-append) from blocking
+    /// agent initialisation entirely.
     pub fn read_entries(path: &Path) -> Result<Vec<WalEntry>, MemoryError> {
         if !path.exists() {
             return Ok(Vec::new());
@@ -171,36 +176,73 @@ impl WalFile {
 
         for _ in 0..entry_count {
             let mut type_buf = [0u8; 1];
-            f.read_exact(&mut type_buf)?;
-            let entry_type = WalEntryType::from_u8(type_buf[0]).ok_or_else(|| {
-                MemoryError::Schema(format!("unknown WAL entry type: {}", type_buf[0]))
-            })?;
+            if f.read_exact(&mut type_buf).is_err() {
+                eprintln!(
+                    "[clawhdf5] WAL truncated: unexpected EOF reading entry type (recovered {}/{} entries)",
+                    entries.len(), entry_count,
+                );
+                break;
+            }
+            let entry_type = match WalEntryType::from_u8(type_buf[0]) {
+                Some(t) => t,
+                None => {
+                    eprintln!(
+                        "[clawhdf5] WAL corrupt: unknown entry type byte 0x{:02X}, stopping replay (recovered {}/{} entries)",
+                        type_buf[0], entries.len(), entry_count,
+                    );
+                    break;
+                }
+            };
 
             let mut ts_buf = [0u8; 8];
-            f.read_exact(&mut ts_buf)?;
+            if f.read_exact(&mut ts_buf).is_err() {
+                eprintln!(
+                    "[clawhdf5] WAL truncated: unexpected EOF reading timestamp (recovered {}/{} entries)",
+                    entries.len(), entry_count,
+                );
+                break;
+            }
             let timestamp = f64::from_le_bytes(ts_buf);
 
             match entry_type {
                 WalEntryType::Save => {
-                    let chunk = read_len_prefixed_str(&mut f)?;
-                    let embedding = read_embedding(&mut f)?;
-                    let source_channel = read_len_prefixed_str(&mut f)?;
-                    let session_id = read_len_prefixed_str(&mut f)?;
-                    let tags = read_len_prefixed_str(&mut f)?;
-                    entries.push(WalEntry {
-                        entry_type,
-                        timestamp,
-                        chunk,
-                        embedding,
-                        source_channel,
-                        session_id,
-                        tags,
-                        tombstone_index: None,
-                    });
+                    let result: Result<WalEntry, MemoryError> = (|| {
+                        let chunk = read_len_prefixed_str(&mut f)?;
+                        let embedding = read_embedding(&mut f)?;
+                        let source_channel = read_len_prefixed_str(&mut f)?;
+                        let session_id = read_len_prefixed_str(&mut f)?;
+                        let tags = read_len_prefixed_str(&mut f)?;
+                        Ok(WalEntry {
+                            entry_type,
+                            timestamp,
+                            chunk,
+                            embedding,
+                            source_channel,
+                            session_id,
+                            tags,
+                            tombstone_index: None,
+                        })
+                    })();
+                    match result {
+                        Ok(entry) => entries.push(entry),
+                        Err(e) => {
+                            eprintln!(
+                                "[clawhdf5] WAL truncated: error reading Save entry ({e}), stopping replay (recovered {}/{} entries)",
+                                entries.len(), entry_count,
+                            );
+                            break;
+                        }
+                    }
                 }
                 WalEntryType::Tombstone => {
                     let mut idx_buf = [0u8; 4];
-                    f.read_exact(&mut idx_buf)?;
+                    if f.read_exact(&mut idx_buf).is_err() {
+                        eprintln!(
+                            "[clawhdf5] WAL truncated: unexpected EOF reading tombstone index (recovered {}/{} entries)",
+                            entries.len(), entry_count,
+                        );
+                        break;
+                    }
                     let idx = u32::from_le_bytes(idx_buf) as usize;
                     entries.push(WalEntry {
                         entry_type,
