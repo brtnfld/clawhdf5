@@ -504,6 +504,146 @@ impl ClawhdfBackend {
     pub fn wal_pending_count(&self) -> usize {
         self.memory.wal_pending_count()
     }
+
+    // ── Knowledge graph operations ──────────────────────────────────────
+
+    /// Add an entity to the knowledge graph and flush to disk.
+    ///
+    /// Returns the auto-assigned entity id.
+    pub fn knowledge_add_entity(
+        &mut self,
+        name: &str,
+        entity_type: &str,
+        embedding_idx: i64,
+    ) -> Result<u64, String> {
+        self.memory
+            .add_entity(name, entity_type, embedding_idx)
+            .map_err(|e| e.to_string())
+    }
+
+    /// Retrieve an entity by id (cloned, safe across mutex boundary).
+    pub fn knowledge_get_entity(&self, id: u64) -> Option<crate::knowledge::Entity> {
+        self.memory.knowledge().get_entity(id).cloned()
+    }
+
+    /// Get a mutable reference to an entity for in-place property edits.
+    ///
+    /// Caller must call [`knowledge_flush`] after modifications.
+    pub fn knowledge_get_entity_mut(
+        &mut self,
+        id: u64,
+    ) -> Option<&mut crate::knowledge::Entity> {
+        self.memory.knowledge_mut().get_entity_mut(id)
+    }
+
+    /// Add a directed relation between two entities and flush to disk.
+    pub fn knowledge_add_relation(
+        &mut self,
+        src: u64,
+        tgt: u64,
+        relation: &str,
+        weight: f32,
+    ) -> Result<(), String> {
+        self.memory
+            .add_relation(src, tgt, relation, weight)
+            .map_err(|e| e.to_string())
+    }
+
+    /// Return all outgoing relations from `src_id` (cloned).
+    pub fn knowledge_get_relations_from(
+        &self,
+        src_id: u64,
+    ) -> Vec<crate::knowledge::Relation> {
+        self.memory
+            .knowledge()
+            .get_relations_from(src_id)
+            .into_iter()
+            .cloned()
+            .collect()
+    }
+
+    /// Return all incoming relations to `tgt_id` (cloned).
+    pub fn knowledge_get_relations_to(
+        &self,
+        tgt_id: u64,
+    ) -> Vec<crate::knowledge::Relation> {
+        self.memory
+            .knowledge()
+            .get_relations_to(tgt_id)
+            .into_iter()
+            .cloned()
+            .collect()
+    }
+
+    /// Return all entities (cloned).
+    pub fn knowledge_entities(&self) -> Vec<crate::knowledge::Entity> {
+        self.memory.knowledge().entities.clone()
+    }
+
+    /// Number of entities in the knowledge graph.
+    pub fn knowledge_entity_count(&self) -> usize {
+        self.memory.knowledge().entities.len()
+    }
+
+    /// Number of relations in the knowledge graph.
+    pub fn knowledge_relation_count(&self) -> usize {
+        self.memory.knowledge().relations.len()
+    }
+
+    /// Run spreading activation from seed entities.
+    ///
+    /// Returns `(entity_id, activation_score)` pairs sorted by score descending.
+    pub fn knowledge_spreading_activation(
+        &self,
+        seed_ids: &[u64],
+        decay_factor: f32,
+        min_activation: f32,
+        max_steps: usize,
+    ) -> Vec<(u64, f32)> {
+        self.memory
+            .knowledge()
+            .spreading_activation(seed_ids, decay_factor, min_activation, max_steps)
+    }
+
+    /// BFS traversal from an entity up to `max_depth` hops.
+    ///
+    /// Returns `(entity, depth)` pairs (cloned entities).
+    pub fn knowledge_bfs_neighbors(
+        &self,
+        entity_id: u64,
+        max_depth: usize,
+    ) -> Vec<(crate::knowledge::Entity, usize)> {
+        self.memory
+            .knowledge()
+            .bfs_neighbors(entity_id, max_depth)
+    }
+
+    /// Find an existing entity by fuzzy name match or create a new one.
+    ///
+    /// Returns `(entity_id, was_created)`.
+    pub fn knowledge_resolve_or_create(
+        &mut self,
+        name: &str,
+        entity_type: &str,
+        embedding_idx: i64,
+        max_distance: usize,
+    ) -> (u64, bool) {
+        self.memory
+            .knowledge_mut()
+            .resolve_or_create(name, entity_type, embedding_idx, max_distance)
+    }
+
+    /// Register an alias for an entity.
+    ///
+    /// Caller must call [`knowledge_flush`] after modifications.
+    pub fn knowledge_add_alias(&mut self, alias: &str, entity_id: i64) {
+        self.memory.knowledge_mut().add_alias(alias, entity_id);
+    }
+
+    /// Flush knowledge graph changes to the HDF5 file.
+    pub fn knowledge_flush(&mut self) -> Result<(), String> {
+        self.memory.flush().map_err(|e| e.to_string())
+    }
 }
 
 impl MemoryBackend for ClawhdfBackend {
