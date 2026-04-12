@@ -147,38 +147,64 @@ impl WalFile {
     }
 
     /// Read all entries from the WAL (for replay on open).
+    ///
+    /// Tolerates truncated WAL files: if the file is shorter than the header's
+    /// `entry_count` claims, the successfully-read entries are returned without
+    /// error. This handles crash-during-truncate and header-only WAL scenarios.
     pub fn read_entries(path: &Path) -> Result<Vec<WalEntry>, MemoryError> {
         if !path.exists() {
             return Ok(Vec::new());
         }
         let mut f = File::open(path)?;
-        // Skip header
+        // Read header
         let mut header = [0u8; 9];
         f.read_exact(&mut header)?;
         if header[0..4] != WAL_MAGIC {
             return Err(MemoryError::Schema("invalid WAL magic bytes".into()));
         }
+        if header[4] != WAL_VERSION {
+            return Err(MemoryError::Schema(format!(
+                "unsupported WAL version {}",
+                header[4]
+            )));
+        }
         let entry_count = u32::from_le_bytes([header[5], header[6], header[7], header[8]]);
         let mut entries = Vec::with_capacity(entry_count as usize);
 
         for _ in 0..entry_count {
+            // Read entry type — EOF here means truncated WAL, not an error
             let mut type_buf = [0u8; 1];
-            f.read_exact(&mut type_buf)?;
-            let entry_type = WalEntryType::from_u8(type_buf[0]).ok_or_else(|| {
-                MemoryError::Schema(format!("unknown WAL entry type: {}", type_buf[0]))
-            })?;
+            if f.read_exact(&mut type_buf).is_err() {
+                break;
+            }
+            let entry_type = match WalEntryType::from_u8(type_buf[0]) {
+                Some(et) => et,
+                None => break,
+            };
 
             let mut ts_buf = [0u8; 8];
-            f.read_exact(&mut ts_buf)?;
+            if f.read_exact(&mut ts_buf).is_err() {
+                break;
+            }
             let timestamp = f64::from_le_bytes(ts_buf);
 
             match entry_type {
                 WalEntryType::Save => {
-                    let chunk = read_len_prefixed_str(&mut f)?;
-                    let embedding = read_embedding(&mut f)?;
-                    let source_channel = read_len_prefixed_str(&mut f)?;
-                    let session_id = read_len_prefixed_str(&mut f)?;
-                    let tags = read_len_prefixed_str(&mut f)?;
+                    let Ok(chunk) = read_len_prefixed_str(&mut f) else {
+                        break;
+                    };
+                    let Ok(embedding) = read_embedding(&mut f) else {
+                        break;
+                    };
+                    let Ok(source_channel) = read_len_prefixed_str(&mut f) else {
+                        break;
+                    };
+                    let Ok(session_id) = read_len_prefixed_str(&mut f) else {
+                        break;
+                    };
+                    let Ok(tags) = read_len_prefixed_str(&mut f) else {
+                        break;
+                    };
                     entries.push(WalEntry {
                         entry_type,
                         timestamp,
@@ -192,7 +218,9 @@ impl WalFile {
                 }
                 WalEntryType::Tombstone => {
                     let mut idx_buf = [0u8; 4];
-                    f.read_exact(&mut idx_buf)?;
+                    if f.read_exact(&mut idx_buf).is_err() {
+                        break;
+                    }
                     let idx = u32::from_le_bytes(idx_buf) as usize;
                     entries.push(WalEntry {
                         entry_type,
@@ -619,6 +647,74 @@ mod tests {
         let wal_path = h5_path.with_extension("h5.wal");
         let entries = WalFile::read_entries(&wal_path).unwrap();
         assert!(entries.is_empty());
+    }
+
+    #[test]
+    fn test_wal_header_only_with_nonzero_count() {
+        // Simulate crash: header says 5 entries but file is only 9 bytes (header only).
+        // This is the exact scenario from the bug report — process exits before WAL
+        // flushes, leaving a stale entry_count in the header.
+        let dir = TempDir::new().unwrap();
+        let wal_path = dir.path().join("corrupted.h5.wal");
+        {
+            let mut f = File::create(&wal_path).unwrap();
+            f.write_all(&WAL_MAGIC).unwrap();
+            f.write_all(&[WAL_VERSION]).unwrap();
+            f.write_all(&5u32.to_le_bytes()).unwrap(); // claims 5 entries
+            f.flush().unwrap();
+        }
+
+        // Should NOT error — should return empty vec
+        let entries = WalFile::read_entries(&wal_path).unwrap();
+        assert!(entries.is_empty());
+    }
+
+    #[test]
+    fn test_wal_partial_truncation() {
+        // Write 2 valid entries, then corrupt the header to claim 5.
+        // read_entries should return the 2 valid entries, not error.
+        let dir = TempDir::new().unwrap();
+        let wal_path = dir.path().join("partial.h5.wal");
+        {
+            let mut wal = WalFile::open(&wal_path).unwrap();
+            wal.append_save(&make_wal_entry("first", &[1.0, 2.0]))
+                .unwrap();
+            wal.append_save(&make_wal_entry("second", &[3.0, 4.0]))
+                .unwrap();
+            assert_eq!(wal.pending_count(), 2);
+        }
+
+        // Corrupt the header: overwrite entry_count to 5
+        {
+            let mut f = OpenOptions::new().write(true).open(&wal_path).unwrap();
+            f.seek(SeekFrom::Start(5)).unwrap();
+            f.write_all(&5u32.to_le_bytes()).unwrap();
+            f.flush().unwrap();
+        }
+
+        // Should recover the 2 valid entries, not fail
+        let entries = WalFile::read_entries(&wal_path).unwrap();
+        assert_eq!(entries.len(), 2);
+        assert_eq!(entries[0].chunk, "first");
+        assert_eq!(entries[1].chunk, "second");
+    }
+
+    #[test]
+    fn test_wal_invalid_version_rejected() {
+        let dir = TempDir::new().unwrap();
+        let wal_path = dir.path().join("badversion.h5.wal");
+        {
+            let mut f = File::create(&wal_path).unwrap();
+            f.write_all(&WAL_MAGIC).unwrap();
+            f.write_all(&[0xFF]).unwrap(); // bad version
+            f.write_all(&0u32.to_le_bytes()).unwrap();
+            f.flush().unwrap();
+        }
+
+        let result = WalFile::read_entries(&wal_path);
+        assert!(result.is_err());
+        let err = result.unwrap_err().to_string();
+        assert!(err.contains("unsupported WAL version"), "got: {err}");
     }
 
     #[test]
