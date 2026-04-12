@@ -1,13 +1,13 @@
-use criterion::{criterion_group, criterion_main, BatchSize, Criterion};
-use tempfile::TempDir;
 use clawhdf5_agent::bm25::BM25Index;
 use clawhdf5_agent::cache::MemoryCache;
 use clawhdf5_agent::hybrid::hybrid_search;
-use clawhdf5_agent::pq::ProductQuantizer;
 use clawhdf5_agent::ivf::{IVFIndex, IVFPQIndex};
-use clawhdf5_agent::strategy::{self, SearchStrategy, HardwareCapabilities};
+use clawhdf5_agent::pq::ProductQuantizer;
+use clawhdf5_agent::strategy::{self, HardwareCapabilities, SearchStrategy};
 use clawhdf5_agent::vector_search;
 use clawhdf5_agent::{AgentMemory, HDF5Memory, MemoryConfig, MemoryEntry};
+use criterion::{BatchSize, Criterion, criterion_group, criterion_main};
+use tempfile::TempDir;
 
 // ---------------------------------------------------------------------------
 // Simple deterministic PRNG (LCG)
@@ -36,11 +36,38 @@ impl Rng {
 // ---------------------------------------------------------------------------
 
 const WORDS: &[&str] = &[
-    "the", "quick", "brown", "fox", "jumps", "over", "lazy", "dog", "rust",
-    "programming", "memory", "vector", "search", "index", "data", "system",
-    "agent", "knowledge", "graph", "neural", "network", "machine", "learning",
-    "deep", "embedding", "cosine", "similarity", "token", "chunk", "session",
-    "channel", "hybrid",
+    "the",
+    "quick",
+    "brown",
+    "fox",
+    "jumps",
+    "over",
+    "lazy",
+    "dog",
+    "rust",
+    "programming",
+    "memory",
+    "vector",
+    "search",
+    "index",
+    "data",
+    "system",
+    "agent",
+    "knowledge",
+    "graph",
+    "neural",
+    "network",
+    "machine",
+    "learning",
+    "deep",
+    "embedding",
+    "cosine",
+    "similarity",
+    "token",
+    "chunk",
+    "session",
+    "channel",
+    "hybrid",
 ];
 
 fn make_vec(rng: &mut Rng, dim: usize) -> Vec<f32> {
@@ -84,7 +111,12 @@ fn make_config(dir: &TempDir, dim: usize) -> MemoryConfig {
     MemoryConfig::new(dir.path().join("bench.h5"), "bench-agent", dim)
 }
 
-fn nearest_centroid_bench(vector: &[f32], centroids: &[f32], num_clusters: usize, dim: usize) -> usize {
+fn nearest_centroid_bench(
+    vector: &[f32],
+    centroids: &[f32],
+    num_clusters: usize,
+    dim: usize,
+) -> usize {
     let mut best = 0;
     let mut best_sim = f32::NEG_INFINITY;
     let vnorm = vector_search::compute_norm(vector);
@@ -199,7 +231,10 @@ fn prenorm_benches(c: &mut Criterion) {
     let n = 10_000;
     let query = make_vec(&mut Rng::new(99), dim);
     let vectors = make_vecs(n, dim, 42);
-    let norms: Vec<f32> = vectors.iter().map(|v| vector_search::compute_norm(v)).collect();
+    let norms: Vec<f32> = vectors
+        .iter()
+        .map(|v| vector_search::compute_norm(v))
+        .collect();
     let tombstones = vec![0u8; n];
 
     c.bench_function("prenorm_search_10k", |b| {
@@ -242,7 +277,10 @@ fn ivf_pq_benches(c: &mut Criterion) {
     let dim = 384;
     let n = 100_000;
     let vectors = make_vecs(n, dim, 42);
-    let norms: Vec<f32> = vectors.iter().map(|v| vector_search::compute_norm(v)).collect();
+    let norms: Vec<f32> = vectors
+        .iter()
+        .map(|v| vector_search::compute_norm(v))
+        .collect();
     let query = make_vec(&mut Rng::new(99), dim);
     let tombstones = vec![0u8; n];
 
@@ -303,7 +341,10 @@ fn rairs_benches(c: &mut Criterion) {
     let dim = 128;
     let n = 10_000;
     let vectors = make_vecs(n, dim, 42);
-    let norms: Vec<f32> = vectors.iter().map(|v| vector_search::compute_norm(v)).collect();
+    let norms: Vec<f32> = vectors
+        .iter()
+        .map(|v| vector_search::compute_norm(v))
+        .collect();
     let query = make_vec(&mut Rng::new(99), dim);
     let tombstones = vec![0u8; n];
 
@@ -431,7 +472,10 @@ fn rayon_benches(c: &mut Criterion) {
     {
         let n = 10_000;
         let vectors = make_vecs(n, dim, 42);
-        let norms: Vec<f32> = vectors.iter().map(|v| vector_search::compute_norm(v)).collect();
+        let norms: Vec<f32> = vectors
+            .iter()
+            .map(|v| vector_search::compute_norm(v))
+            .collect();
         let tombstones = vec![0u8; n];
 
         c.bench_function("rayon_cosine_10k", |b| {
@@ -445,14 +489,20 @@ fn rayon_benches(c: &mut Criterion) {
                     .enumerate()
                     .flat_map(|(ci, chunk)| {
                         let base = ci * chunk_size;
-                        chunk.iter().enumerate().filter_map(|(j, v)| {
-                            let i = base + j;
-                            if tombstones[i] != 0 { return None; }
-                            let score = clawhdf5_agent::cosine_similarity_prenorm(
-                                &query, query_norm, v, norms[i],
-                            );
-                            Some((i, score))
-                        }).collect::<Vec<_>>()
+                        chunk
+                            .iter()
+                            .enumerate()
+                            .filter_map(|(j, v)| {
+                                let i = base + j;
+                                if tombstones[i] != 0 {
+                                    return None;
+                                }
+                                let score = clawhdf5_agent::cosine_similarity_prenorm(
+                                    &query, query_norm, v, norms[i],
+                                );
+                                Some((i, score))
+                            })
+                            .collect::<Vec<_>>()
                     })
                     .collect();
                 results.sort_by(|a, b| b.1.partial_cmp(&a.1).unwrap_or(std::cmp::Ordering::Equal));
@@ -463,7 +513,12 @@ fn rayon_benches(c: &mut Criterion) {
 
         c.bench_function("sequential_cosine_10k", |b| {
             b.iter(|| {
-                vector_search::cosine_similarity_batch_prenorm(&query, &vectors, &norms, &tombstones)
+                vector_search::cosine_similarity_batch_prenorm(
+                    &query,
+                    &vectors,
+                    &norms,
+                    &tombstones,
+                )
             });
         });
     }
@@ -471,7 +526,10 @@ fn rayon_benches(c: &mut Criterion) {
     {
         let n = 100_000;
         let vectors = make_vecs(n, dim, 42);
-        let norms: Vec<f32> = vectors.iter().map(|v| vector_search::compute_norm(v)).collect();
+        let norms: Vec<f32> = vectors
+            .iter()
+            .map(|v| vector_search::compute_norm(v))
+            .collect();
         let tombstones = vec![0u8; n];
 
         c.bench_function("rayon_cosine_100k", |b| {
@@ -485,14 +543,20 @@ fn rayon_benches(c: &mut Criterion) {
                     .enumerate()
                     .flat_map(|(ci, chunk)| {
                         let base = ci * chunk_size;
-                        chunk.iter().enumerate().filter_map(|(j, v)| {
-                            let i = base + j;
-                            if tombstones[i] != 0 { return None; }
-                            let score = clawhdf5_agent::cosine_similarity_prenorm(
-                                &query, query_norm, v, norms[i],
-                            );
-                            Some((i, score))
-                        }).collect::<Vec<_>>()
+                        chunk
+                            .iter()
+                            .enumerate()
+                            .filter_map(|(j, v)| {
+                                let i = base + j;
+                                if tombstones[i] != 0 {
+                                    return None;
+                                }
+                                let score = clawhdf5_agent::cosine_similarity_prenorm(
+                                    &query, query_norm, v, norms[i],
+                                );
+                                Some((i, score))
+                            })
+                            .collect::<Vec<_>>()
                     })
                     .collect();
                 results.sort_by(|a, b| b.1.partial_cmp(&a.1).unwrap_or(std::cmp::Ordering::Equal));
@@ -515,12 +579,21 @@ fn blas_benches(c: &mut Criterion) {
     {
         let n = 10_000;
         let vectors = make_vecs(n, dim, 42);
-        let norms: Vec<f32> = vectors.iter().map(|v| vector_search::compute_norm(v)).collect();
+        let norms: Vec<f32> = vectors
+            .iter()
+            .map(|v| vector_search::compute_norm(v))
+            .collect();
         let tombstones = vec![0u8; n];
 
         c.bench_function("blas_cosine_10k", |b| {
             b.iter(|| {
-                vector_search::cosine_similarity_batch_blas(&query, &vectors, &norms, &tombstones, 10)
+                vector_search::cosine_similarity_batch_blas(
+                    &query,
+                    &vectors,
+                    &norms,
+                    &tombstones,
+                    10,
+                )
             });
         });
     }
@@ -528,12 +601,21 @@ fn blas_benches(c: &mut Criterion) {
     {
         let n = 100_000;
         let vectors = make_vecs(n, dim, 42);
-        let norms: Vec<f32> = vectors.iter().map(|v| vector_search::compute_norm(v)).collect();
+        let norms: Vec<f32> = vectors
+            .iter()
+            .map(|v| vector_search::compute_norm(v))
+            .collect();
         let tombstones = vec![0u8; n];
 
         c.bench_function("blas_cosine_100k", |b| {
             b.iter(|| {
-                vector_search::cosine_similarity_batch_blas(&query, &vectors, &norms, &tombstones, 10)
+                vector_search::cosine_similarity_batch_blas(
+                    &query,
+                    &vectors,
+                    &norms,
+                    &tombstones,
+                    10,
+                )
             });
         });
     }
@@ -563,13 +645,21 @@ fn accelerate_benches(c: &mut Criterion) {
         let n = 10_000;
         let vectors = make_vecs(n, dim, 42);
         let flat: Vec<f32> = vectors.iter().flat_map(|v| v.iter().copied()).collect();
-        let norms: Vec<f32> = vectors.iter().map(|v| vector_search::compute_norm(v)).collect();
+        let norms: Vec<f32> = vectors
+            .iter()
+            .map(|v| vector_search::compute_norm(v))
+            .collect();
         let tombstones = vec![0u8; n];
 
         c.bench_function("accelerate_cosine_10k", |b| {
             b.iter(|| {
                 clawhdf5_agent::accelerate_search::accelerate_cosine_batch(
-                    &query, &flat, &norms, &tombstones, dim, 10,
+                    &query,
+                    &flat,
+                    &norms,
+                    &tombstones,
+                    dim,
+                    10,
                 )
             });
         });
@@ -578,7 +668,10 @@ fn accelerate_benches(c: &mut Criterion) {
         c.bench_function("simd_prenorm_cosine_10k", |b| {
             b.iter(|| {
                 vector_search::cosine_similarity_batch_prenorm(
-                    &query, &vectors, &norms, &tombstones,
+                    &query,
+                    &vectors,
+                    &norms,
+                    &tombstones,
                 )
             });
         });
@@ -587,7 +680,11 @@ fn accelerate_benches(c: &mut Criterion) {
         c.bench_function("accelerate_vecs_cosine_10k", |b| {
             b.iter(|| {
                 clawhdf5_agent::accelerate_search::accelerate_cosine_batch_vecs(
-                    &query, &vectors, &norms, &tombstones, 10,
+                    &query,
+                    &vectors,
+                    &norms,
+                    &tombstones,
+                    10,
                 )
             });
         });
@@ -597,13 +694,21 @@ fn accelerate_benches(c: &mut Criterion) {
         let n = 100_000;
         let vectors = make_vecs(n, dim, 42);
         let flat: Vec<f32> = vectors.iter().flat_map(|v| v.iter().copied()).collect();
-        let norms: Vec<f32> = vectors.iter().map(|v| vector_search::compute_norm(v)).collect();
+        let norms: Vec<f32> = vectors
+            .iter()
+            .map(|v| vector_search::compute_norm(v))
+            .collect();
         let tombstones = vec![0u8; n];
 
         c.bench_function("accelerate_cosine_100k", |b| {
             b.iter(|| {
                 clawhdf5_agent::accelerate_search::accelerate_cosine_batch(
-                    &query, &flat, &norms, &tombstones, dim, 10,
+                    &query,
+                    &flat,
+                    &norms,
+                    &tombstones,
+                    dim,
+                    10,
                 )
             });
         });
@@ -626,13 +731,21 @@ fn accelerate_benches(c: &mut Criterion) {
         let n = 10_000;
         let vectors = make_vecs(n, dim, 42);
         let flat: Vec<f32> = vectors.iter().flat_map(|v| v.iter().copied()).collect();
-        let norms: Vec<f32> = vectors.iter().map(|v| vector_search::compute_norm(v)).collect();
+        let norms: Vec<f32> = vectors
+            .iter()
+            .map(|v| vector_search::compute_norm(v))
+            .collect();
         let tombstones = vec![0u8; n];
 
         c.bench_function("vdsp_cosine_10k", |b| {
             b.iter(|| {
                 clawhdf5_agent::accelerate_search::vdsp_cosine_batch(
-                    &query, &flat, &norms, &tombstones, dim, 10,
+                    &query,
+                    &flat,
+                    &norms,
+                    &tombstones,
+                    dim,
+                    10,
                 )
             });
         });
@@ -648,16 +761,17 @@ fn adaptive_benches(c: &mut Criterion) {
     let n = 10_000;
     let query = make_vec(&mut Rng::new(99), dim);
     let vectors = make_vecs(n, dim, 42);
-    let norms: Vec<f32> = vectors.iter().map(|v| vector_search::compute_norm(v)).collect();
+    let norms: Vec<f32> = vectors
+        .iter()
+        .map(|v| vector_search::compute_norm(v))
+        .collect();
     let tombstones = vec![0u8; n];
 
     c.bench_function("adaptive_search_10k", |b| {
         let hw = HardwareCapabilities::detect();
         let strat = strategy::auto_select_strategy(n, &hw);
         b.iter(|| {
-            strategy::search_with_metrics(
-                &query, &vectors, &norms, &tombstones, 10, strat, None,
-            )
+            strategy::search_with_metrics(&query, &vectors, &norms, &tombstones, 10, strat, None)
         });
     });
 
@@ -665,8 +779,13 @@ fn adaptive_benches(c: &mut Criterion) {
     c.bench_function("strategy_scalar_10k", |b| {
         b.iter(|| {
             strategy::search_with_metrics(
-                &query, &vectors, &norms, &tombstones, 10,
-                SearchStrategy::Scalar, None,
+                &query,
+                &vectors,
+                &norms,
+                &tombstones,
+                10,
+                SearchStrategy::Scalar,
+                None,
             )
         });
     });
@@ -674,8 +793,13 @@ fn adaptive_benches(c: &mut Criterion) {
     c.bench_function("strategy_simd_10k", |b| {
         b.iter(|| {
             strategy::search_with_metrics(
-                &query, &vectors, &norms, &tombstones, 10,
-                SearchStrategy::SimdBruteForce, None,
+                &query,
+                &vectors,
+                &norms,
+                &tombstones,
+                10,
+                SearchStrategy::SimdBruteForce,
+                None,
             )
         });
     });
@@ -683,8 +807,13 @@ fn adaptive_benches(c: &mut Criterion) {
     c.bench_function("strategy_rayon_10k", |b| {
         b.iter(|| {
             strategy::search_with_metrics(
-                &query, &vectors, &norms, &tombstones, 10,
-                SearchStrategy::RayonParallel, None,
+                &query,
+                &vectors,
+                &norms,
+                &tombstones,
+                10,
+                SearchStrategy::RayonParallel,
+                None,
             )
         });
     });
@@ -768,7 +897,9 @@ fn wal_benches(c: &mut Criterion) {
                 config.wal_max_entries = 5000;
                 let mut mem = HDF5Memory::create(config).unwrap();
                 let entries = make_entries(100, dim, 77);
-                for e in entries { mem.save(e).unwrap(); }
+                for e in entries {
+                    mem.save(e).unwrap();
+                }
                 (dir, mem)
             },
             |(_dir, mut mem)| {
@@ -856,14 +987,58 @@ fn alias_benches(c: &mut Criterion) {
 
     // Build a knowledge cache with 50 entities and 100 aliases
     let mut kg = KnowledgeCache::new();
-    let names = ["Alice", "Bob", "Charlie", "David", "Eve", "Frank", "Grace",
-                 "Henry", "Irene", "Jack", "Karen", "Leo", "Mona", "Nick", "Olivia",
-                 "Peter", "Quinn", "Rachel", "Sam", "Tina", "Uma", "Victor", "Wendy",
-                 "Xander", "Yara", "Zack", "Acme Corp", "BigCo", "CloudNet", "DataSys",
-                 "EdgeAI", "FinTech", "GlobalX", "HyperNet", "InfoSec", "JetOps",
-                 "KernelDev", "LogicAI", "MeshNet", "NanoTech", "OpenStack",
-                 "PlatformX", "QuantumAI", "RoboSys", "SkyNet", "TechFlow",
-                 "UniCloud", "VirtNet", "WaveAI", "XenoData"];
+    let names = [
+        "Alice",
+        "Bob",
+        "Charlie",
+        "David",
+        "Eve",
+        "Frank",
+        "Grace",
+        "Henry",
+        "Irene",
+        "Jack",
+        "Karen",
+        "Leo",
+        "Mona",
+        "Nick",
+        "Olivia",
+        "Peter",
+        "Quinn",
+        "Rachel",
+        "Sam",
+        "Tina",
+        "Uma",
+        "Victor",
+        "Wendy",
+        "Xander",
+        "Yara",
+        "Zack",
+        "Acme Corp",
+        "BigCo",
+        "CloudNet",
+        "DataSys",
+        "EdgeAI",
+        "FinTech",
+        "GlobalX",
+        "HyperNet",
+        "InfoSec",
+        "JetOps",
+        "KernelDev",
+        "LogicAI",
+        "MeshNet",
+        "NanoTech",
+        "OpenStack",
+        "PlatformX",
+        "QuantumAI",
+        "RoboSys",
+        "SkyNet",
+        "TechFlow",
+        "UniCloud",
+        "VirtNet",
+        "WaveAI",
+        "XenoData",
+    ];
     for (i, name) in names.iter().enumerate() {
         let id = kg.add_entity(name, "entity", -1);
         kg.add_alias(&format!("alias_{i}"), id as i64);
@@ -888,20 +1063,26 @@ fn alias_benches(c: &mut Criterion) {
 // ---------------------------------------------------------------------------
 
 fn strategy_benches(c: &mut Criterion) {
-    use clawhdf5_agent::memory_strategy::*;
     use clawhdf5_agent::SearchResult;
+    use clawhdf5_agent::memory_strategy::*;
 
     struct EmptyStore;
     impl MemoryStoreView for EmptyStore {
-        fn search(&self, _: &[f32], _: usize) -> Vec<SearchResult> { vec![] }
-        fn memory_count(&self) -> usize { 0 }
-        fn entity_count(&self) -> usize { 0 }
+        fn search(&self, _: &[f32], _: usize) -> Vec<SearchResult> {
+            vec![]
+        }
+        fn memory_count(&self) -> usize {
+            0
+        }
+        fn entity_count(&self) -> usize {
+            0
+        }
     }
 
     let save_every = SaveEveryExchange::default();
     let shift = SaveOnSemanticShift {
         gate: clawhdf5_agent::decision_gate::DecisionGate::new(
-            clawhdf5_agent::decision_gate::GateConfig::default()
+            clawhdf5_agent::decision_gate::GateConfig::default(),
         ),
         shift_threshold: 0.25,
         lookback_k: 5,
@@ -909,7 +1090,9 @@ fn strategy_benches(c: &mut Criterion) {
 
     let exchange = Exchange {
         user_turn: "What is the deployment architecture for the new microservices?".into(),
-        agent_turn: "The deployment uses Kubernetes with a service mesh for inter-service communication.".into(),
+        agent_turn:
+            "The deployment uses Kubernetes with a service mesh for inter-service communication."
+                .into(),
         session_id: "bench-session".into(),
         turn_number: 1,
         timestamp: 1_000_000.0,
@@ -998,14 +1181,26 @@ criterion_group!(blas_bench_group, blas_benches);
 criterion_group!(accelerate_bench_group, accelerate_benches);
 
 // Criterion main: include all available bench groups
-#[cfg(all(feature = "fast-math", any(feature = "accelerate", feature = "openblas")))]
+#[cfg(all(
+    feature = "fast-math",
+    any(feature = "accelerate", feature = "openblas")
+))]
 criterion_main!(benches, blas_bench_group, accelerate_bench_group);
 
-#[cfg(all(feature = "fast-math", not(any(feature = "accelerate", feature = "openblas"))))]
+#[cfg(all(
+    feature = "fast-math",
+    not(any(feature = "accelerate", feature = "openblas"))
+))]
 criterion_main!(benches, blas_bench_group);
 
-#[cfg(all(not(feature = "fast-math"), any(feature = "accelerate", feature = "openblas")))]
+#[cfg(all(
+    not(feature = "fast-math"),
+    any(feature = "accelerate", feature = "openblas")
+))]
 criterion_main!(benches, accelerate_bench_group);
 
-#[cfg(all(not(feature = "fast-math"), not(any(feature = "accelerate", feature = "openblas"))))]
+#[cfg(all(
+    not(feature = "fast-math"),
+    not(any(feature = "accelerate", feature = "openblas"))
+))]
 criterion_main!(benches);

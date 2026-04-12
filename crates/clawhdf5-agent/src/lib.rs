@@ -4,13 +4,13 @@
 //! All data is cached in-memory for fast access and flushed to disk
 //! on mutations.
 
-#[cfg(feature = "async")]
-pub mod async_memory;
-pub mod bm25;
 #[cfg(any(feature = "accelerate", feature = "openblas"))]
 pub mod accelerate_search;
+#[cfg(feature = "async")]
+pub mod async_memory;
 #[cfg(feature = "fast-math")]
 pub mod blas_search;
+pub mod bm25;
 pub mod gpu_search;
 pub mod hybrid;
 pub mod ivf;
@@ -19,26 +19,26 @@ pub mod strategy;
 pub mod vector_search;
 
 pub mod agents_md;
+pub mod anomaly;
 pub mod cache;
 pub mod confidence;
+pub mod consolidation;
 pub mod decision_gate;
+pub mod entity_extract;
+pub mod ephemeral;
 pub mod knowledge;
 pub mod memory_strategy;
+pub mod multimodal;
+pub mod openclaw;
+pub mod provenance;
+pub mod query_expand;
 pub mod reranker;
 pub mod schema;
 pub mod search;
 pub mod session;
 pub mod storage;
-pub mod wal;
-pub mod consolidation;
-pub mod multimodal;
 pub mod temporal;
-pub mod provenance;
-pub mod anomaly;
-pub mod openclaw;
-pub mod ephemeral;
-pub mod entity_extract;
-pub mod query_expand;
+pub mod wal;
 
 /// Cosine similarity with pre-computed norms using clawhdf5_accel primitives.
 ///
@@ -205,7 +205,9 @@ pub struct HDF5Memory {
 }
 
 impl std::fmt::Debug for HDF5Memory {
-    fn fmt(&self, f: &mut std::fmt::Formatter<'_>) -> std::fmt::Result { write!(f, "HDF5Memory({:?})", self.config.agent_id) }
+    fn fmt(&self, f: &mut std::fmt::Formatter<'_>) -> std::fmt::Result {
+        write!(f, "HDF5Memory({:?})", self.config.agent_id)
+    }
 }
 
 impl HDF5Memory {
@@ -298,12 +300,7 @@ impl HDF5Memory {
     }
 
     /// Add an entity to the knowledge graph and flush.
-    pub fn add_entity(
-        &mut self,
-        name: &str,
-        entity_type: &str,
-        embedding_idx: i64,
-    ) -> Result<u64> {
+    pub fn add_entity(&mut self, name: &str, entity_type: &str, embedding_idx: i64) -> Result<u64> {
         let id = self.knowledge.add_entity(name, entity_type, embedding_idx);
         self.flush()?;
         Ok(id)
@@ -316,13 +313,7 @@ impl HDF5Memory {
     }
 
     /// Add a relation to the knowledge graph and flush.
-    pub fn add_relation(
-        &mut self,
-        src: u64,
-        tgt: u64,
-        relation: &str,
-        weight: f32,
-    ) -> Result<()> {
+    pub fn add_relation(&mut self, src: u64, tgt: u64, relation: &str, weight: f32) -> Result<()> {
         self.knowledge.add_relation(src, tgt, relation, weight);
         self.flush()?;
         Ok(())
@@ -345,9 +336,9 @@ impl HDF5Memory {
         let mut result = Vec::with_capacity(entities.len());
         for entity in entities {
             let type_str = format!("{:?}", entity.entity_type).to_lowercase();
-            let (id, _created) =
-                self.knowledge
-                    .resolve_or_create(&entity.text, &type_str, -1, 1);
+            let (id, _created) = self
+                .knowledge
+                .resolve_or_create(&entity.text, &type_str, -1, 1);
             result.push((id, entity));
         }
         // Best-effort flush; ignore errors here so the method remains infallible.
@@ -706,10 +697,7 @@ mod tests {
 
         let mut builder = clawhdf5::FileBuilder::new();
         let mut meta = builder.create_group("meta");
-        meta.set_attr(
-            "schema_version",
-            clawhdf5::AttrValue::String("99.0".into()),
-        );
+        meta.set_attr("schema_version", clawhdf5::AttrValue::String("99.0".into()));
         meta.set_attr("created_at", clawhdf5::AttrValue::String("now".into()));
         meta.set_attr("agent_id", clawhdf5::AttrValue::String("test".into()));
         meta.set_attr("embedder", clawhdf5::AttrValue::String("test".into()));
@@ -893,8 +881,7 @@ mod tests {
 
         {
             let mut mem = HDF5Memory::create(config).unwrap();
-            mem.save(make_entry("keep", &[1.0, 0.0, 0.0, 0.0]))
-                .unwrap();
+            mem.save(make_entry("keep", &[1.0, 0.0, 0.0, 0.0])).unwrap();
             mem.save(make_entry("delete me", &[0.0, 1.0, 0.0, 0.0]))
                 .unwrap();
             mem.save(make_entry("also keep", &[0.0, 0.0, 1.0, 0.0]))
@@ -976,8 +963,7 @@ mod tests {
         let dir = TempDir::new().unwrap();
         let config = make_config(&dir);
         let mut mem = HDF5Memory::create(config).unwrap();
-        mem.save(make_entry("snap", &[1.0, 2.0, 3.0, 4.0]))
-            .unwrap();
+        mem.save(make_entry("snap", &[1.0, 2.0, 3.0, 4.0])).unwrap();
 
         let snap_path = dir.path().join("my_snapshot.h5");
         let result = mem.snapshot(&snap_path).unwrap();
@@ -1090,8 +1076,11 @@ mod tests {
         let mut mem = HDF5Memory::create(config).unwrap();
 
         for i in 0..5 {
-            mem.save(make_entry(&format!("decay {i}"), &[i as f32, 1.0, 0.0, 0.0]))
-                .unwrap();
+            mem.save(make_entry(
+                &format!("decay {i}"),
+                &[i as f32, 1.0, 0.0, 0.0],
+            ))
+            .unwrap();
         }
 
         // Call tick_session 100 times with no searches
@@ -1116,14 +1105,16 @@ mod tests {
 
         mem.save(make_entry("alpha", &[1.0, 0.0, 0.0, 0.0]))
             .unwrap();
-        mem.save(make_entry("beta", &[0.0, 1.0, 0.0, 0.0]))
-            .unwrap();
+        mem.save(make_entry("beta", &[0.0, 1.0, 0.0, 0.0])).unwrap();
         mem.save(make_entry("gamma", &[0.5, 0.5, 0.0, 0.0]))
             .unwrap();
 
         // All weights should be 1.0 (default)
         for &w in &mem.cache.activation_weights {
-            assert!((w - 1.0).abs() < 1e-6, "default weight should be 1.0, got {w}");
+            assert!(
+                (w - 1.0).abs() < 1e-6,
+                "default weight should be 1.0, got {w}"
+            );
         }
 
         // Search: since sqrt(1.0) == 1.0, scores should be pure cosine
@@ -1149,7 +1140,10 @@ mod tests {
             let query = vec![1.0, 0.0, 0.0, 0.0];
             mem.hybrid_search(&query, "", 1.0, 0.0, 1);
             let boosted_weight = mem.cache.activation_weights[0];
-            assert!(boosted_weight > 1.0, "weight should be boosted after search");
+            assert!(
+                boosted_weight > 1.0,
+                "weight should be boosted after search"
+            );
         }
 
         // Reopen and check weight persisted
@@ -1170,8 +1164,11 @@ mod tests {
 
         // Save 5 entries
         for i in 0..5 {
-            mem.save(make_entry(&format!("compact {i}"), &[i as f32, 1.0, 0.0, 0.0]))
-                .unwrap();
+            mem.save(make_entry(
+                &format!("compact {i}"),
+                &[i as f32, 1.0, 0.0, 0.0],
+            ))
+            .unwrap();
         }
 
         // Manually set distinct weights
@@ -1205,7 +1202,11 @@ mod tests {
 
         // Every result should have a populated activation field
         for r in &results {
-            assert!(r.activation > 0.0, "activation should be > 0, got {}", r.activation);
+            assert!(
+                r.activation > 0.0,
+                "activation should be > 0, got {}",
+                r.activation
+            );
         }
     }
 
@@ -1246,19 +1247,35 @@ mod tests {
 }
 
 impl HDF5Memory {
-pub fn set_strategy(&mut self, s: Box<dyn MemoryStrategy>) { self.strategy = Some(s); }
+    pub fn set_strategy(&mut self, s: Box<dyn MemoryStrategy>) {
+        self.strategy = Some(s);
+    }
     pub fn record(&mut self, exchange: Exchange) -> Result<StrategyOutput> {
-        let strat = self.strategy.as_ref().expect("call set_strategy() before record()");
+        let strat = self
+            .strategy
+            .as_ref()
+            .expect("call set_strategy() before record()");
         let view = memory_strategy::CacheStoreView::new(&self.cache, &self.knowledge);
         let output = strat.evaluate(&exchange, &view);
         for e in &output.entries {
-            self.cache.push(e.chunk.clone(), e.embedding.clone(), e.source_channel.clone(), e.timestamp, e.session_id.clone(), e.tags.clone());
+            self.cache.push(
+                e.chunk.clone(),
+                e.embedding.clone(),
+                e.source_channel.clone(),
+                e.timestamp,
+                e.session_id.clone(),
+                e.tags.clone(),
+            );
         }
         for eu in &output.entity_updates {
             let id = self.knowledge.add_entity(&eu.name, &eu.entity_type, -1);
-            for a in &eu.aliases { self.knowledge.add_alias(a, id as i64); }
+            for a in &eu.aliases {
+                self.knowledge.add_alias(a, id as i64);
+            }
         }
-        if !output.entries.is_empty() || !output.entity_updates.is_empty() { self.flush()?; }
+        if !output.entries.is_empty() || !output.entity_updates.is_empty() {
+            self.flush()?;
+        }
         Ok(output)
     }
 }
@@ -1330,7 +1347,11 @@ impl HDF5Memory {
         let mut promoted = 0;
 
         for key in candidates {
-            let entry = match self.ephemeral.as_mut().and_then(|s| s.take_for_promotion(&key)) {
+            let entry = match self
+                .ephemeral
+                .as_mut()
+                .and_then(|s| s.take_for_promotion(&key))
+            {
                 Some(e) => e,
                 None => continue,
             };
@@ -1416,4 +1437,3 @@ impl HDF5Memory {
         results
     }
 }
-

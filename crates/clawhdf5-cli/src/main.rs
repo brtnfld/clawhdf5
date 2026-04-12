@@ -120,19 +120,28 @@ fn run(cli: Cli) -> Result<(), Box<dyn std::error::Error>> {
             println!("{}", serde_json::to_string(&j)?);
         }
 
-        Commands::Search { embedding, query, top_k, vector_weight, keyword_weight } => {
+        Commands::Search {
+            embedding,
+            query,
+            top_k,
+            vector_weight,
+            keyword_weight,
+        } => {
             let emb: Vec<f32> = serde_json::from_str(&embedding)?;
             let mut mem = HDF5Memory::open(&cli.path)?;
             let results = mem.hybrid_search(&emb, &query, vector_weight, keyword_weight, top_k);
-            let j: Vec<serde_json::Value> = results.iter().map(|r| {
-                serde_json::json!({
-                    "index": r.index,
-                    "score": r.score,
-                    "chunk": &r.chunk,
-                    "timestamp": r.timestamp,
-                    "source_channel": &r.source_channel,
+            let j: Vec<serde_json::Value> = results
+                .iter()
+                .map(|r| {
+                    serde_json::json!({
+                        "index": r.index,
+                        "score": r.score,
+                        "chunk": &r.chunk,
+                        "timestamp": r.timestamp,
+                        "source_channel": &r.source_channel,
+                    })
                 })
-            }).collect();
+                .collect();
             println!("{}", serde_json::to_string_pretty(&j)?);
         }
 

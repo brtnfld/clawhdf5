@@ -225,9 +225,7 @@ pub fn accelerate_batch_norms(vectors_flat: &[f32], dim: usize) -> Vec<f32> {
 
     for i in 0..n {
         let offset = i * dim;
-        let norm = unsafe {
-            cblas_snrm2(dim as i32, vectors_flat[offset..].as_ptr(), 1)
-        };
+        let norm = unsafe { cblas_snrm2(dim as i32, vectors_flat[offset..].as_ptr(), 1) };
         norms.push(norm);
     }
 
@@ -240,14 +238,7 @@ pub fn accelerate_batch_norms(vectors_flat: &[f32], dim: usize) -> Vec<f32> {
 
 #[cfg(target_os = "macos")]
 extern "C" {
-    fn vDSP_dotpr(
-        __A: *const f32,
-        __IA: i32,
-        __B: *const f32,
-        __IB: i32,
-        __C: *mut f32,
-        __N: u32,
-    );
+    fn vDSP_dotpr(__A: *const f32, __IA: i32, __B: *const f32, __IB: i32, __C: *mut f32, __N: u32);
 }
 
 /// Batch cosine similarity using vDSP_dotpr (macOS only).
@@ -337,7 +328,10 @@ mod tests {
 
         let accel_results = accelerate_cosine_batch(&query, &flat, &norms, &tombstones, dim, n);
         let simd_results = crate::vector_search::cosine_similarity_batch_prenorm(
-            &query, &vecs, &norms, &tombstones,
+            &query,
+            &vecs,
+            &norms,
+            &tombstones,
         );
 
         assert_eq!(accel_results.len(), simd_results.len());
@@ -346,7 +340,9 @@ mod tests {
             assert!(
                 (a.1 - s.1).abs() < 1e-4,
                 "score mismatch at idx {}: accel={} vs simd={}",
-                a.0, a.1, s.1,
+                a.0,
+                a.1,
+                s.1,
             );
         }
     }
@@ -362,10 +358,12 @@ mod tests {
         let tombstones = vec![0u8; n];
         let query = vecs[5].clone();
 
-        let accel_top10 =
-            accelerate_cosine_batch(&query, &flat, &norms, &tombstones, dim, 10);
+        let accel_top10 = accelerate_cosine_batch(&query, &flat, &norms, &tombstones, dim, 10);
         let simd_all = crate::vector_search::cosine_similarity_batch_prenorm(
-            &query, &vecs, &norms, &tombstones,
+            &query,
+            &vecs,
+            &norms,
+            &tombstones,
         );
         let simd_top10 = crate::vector_search::top_k(simd_all, 10);
 
@@ -385,10 +383,8 @@ mod tests {
         let tombstones = vec![0u8; n];
         let query = vecs[3].clone();
 
-        let flat_results =
-            accelerate_cosine_batch(&query, &flat, &norms, &tombstones, dim, 10);
-        let vec_results =
-            accelerate_cosine_batch_vecs(&query, &vecs, &norms, &tombstones, 10);
+        let flat_results = accelerate_cosine_batch(&query, &flat, &norms, &tombstones, dim, 10);
+        let vec_results = accelerate_cosine_batch_vecs(&query, &vecs, &norms, &tombstones, 10);
 
         assert_eq!(flat_results.len(), vec_results.len());
         for (f, v) in flat_results.iter().zip(&vec_results) {
@@ -476,7 +472,11 @@ mod tests {
         let norms = compute_norms_flat(&flat, 3);
         let results = accelerate_cosine_batch(&query, &flat, &norms, &[0], 3, 1);
         assert_eq!(results.len(), 1);
-        assert!(results[0].1.abs() < 1e-5, "expected ~0, got {}", results[0].1);
+        assert!(
+            results[0].1.abs() < 1e-5,
+            "expected ~0, got {}",
+            results[0].1
+        );
     }
 
     // --- Test 10: Negative correlation detected ---
@@ -535,10 +535,12 @@ mod tests {
         }
         let query = vecs[1].clone();
 
-        let accel_top20 =
-            accelerate_cosine_batch(&query, &flat, &norms, &tombstones, dim, 20);
+        let accel_top20 = accelerate_cosine_batch(&query, &flat, &norms, &tombstones, dim, 20);
         let simd_all = crate::vector_search::cosine_similarity_batch_prenorm(
-            &query, &vecs, &norms, &tombstones,
+            &query,
+            &vecs,
+            &norms,
+            &tombstones,
         );
         let simd_top20 = crate::vector_search::top_k(simd_all, 20);
 
@@ -548,7 +550,8 @@ mod tests {
             assert!(
                 (a.1 - s.1).abs() < 1e-4,
                 "score mismatch: accel={} vs simd={}",
-                a.1, s.1,
+                a.1,
+                s.1,
             );
         }
     }
@@ -571,10 +574,8 @@ mod tests {
         let tombstones = vec![0u8; n];
         let query: Vec<f32> = flat[..dim].to_vec();
 
-        let sgemv_results =
-            accelerate_cosine_batch(&query, &flat, &norms, &tombstones, dim, 10);
-        let vdsp_results =
-            vdsp_cosine_batch(&query, &flat, &norms, &tombstones, dim, 10);
+        let sgemv_results = accelerate_cosine_batch(&query, &flat, &norms, &tombstones, dim, 10);
+        let vdsp_results = vdsp_cosine_batch(&query, &flat, &norms, &tombstones, dim, 10);
 
         assert_eq!(sgemv_results.len(), vdsp_results.len());
         for (s, v) in sgemv_results.iter().zip(&vdsp_results) {
@@ -582,7 +583,8 @@ mod tests {
             assert!(
                 (s.1 - v.1).abs() < 1e-5,
                 "score mismatch: sgemv={} vs vdsp={}",
-                s.1, v.1,
+                s.1,
+                v.1,
             );
         }
     }
@@ -598,8 +600,7 @@ mod tests {
         let query: Vec<f32> = flat[..dim].to_vec();
 
         let start = std::time::Instant::now();
-        let results =
-            accelerate_cosine_batch(&query, &flat, &norms, &tombstones, dim, 10);
+        let results = accelerate_cosine_batch(&query, &flat, &norms, &tombstones, dim, 10);
         let elapsed = start.elapsed();
 
         assert_eq!(results.len(), 10);

@@ -43,8 +43,7 @@ pub fn cosine_similarity_batch(
                 continue;
             }
             let vec_norm = clawhdf5_accel::vector_norm(&vectors[i]);
-            let score =
-                crate::cosine_similarity_prenorm(query, query_norm, &vectors[i], vec_norm);
+            let score = crate::cosine_similarity_prenorm(query, query_norm, &vectors[i], vec_norm);
             results.push((i, score));
         }
     }
@@ -192,8 +191,7 @@ pub fn parallel_cosine_batch(
                     continue;
                 }
                 let vec_norm = clawhdf5_accel::vector_norm(vec);
-                let score =
-                    crate::cosine_similarity_prenorm(query, query_norm, vec, vec_norm);
+                let score = crate::cosine_similarity_prenorm(query, query_norm, vec, vec_norm);
                 local.push((i, score));
             }
             local.sort_by(|a, b| b.1.partial_cmp(&a.1).unwrap_or(std::cmp::Ordering::Equal));
@@ -240,8 +238,7 @@ pub fn parallel_cosine_batch_prenorm(
                 if i < tombstones.len() && tombstones[i] != 0 {
                     continue;
                 }
-                let score =
-                    crate::cosine_similarity_prenorm(query, query_norm, vec, norms[i]);
+                let score = crate::cosine_similarity_prenorm(query, query_norm, vec, norms[i]);
                 local.push((i, score));
             }
             local.sort_by(|a, b| b.1.partial_cmp(&a.1).unwrap_or(std::cmp::Ordering::Equal));
@@ -566,7 +563,10 @@ mod tests {
         }
 
         let results = parallel_cosine_batch(&query, &vectors, &tombstones, 10);
-        assert!(results.iter().all(|r| r.0 % 2 != 0), "should skip tombstoned");
+        assert!(
+            results.iter().all(|r| r.0 % 2 != 0),
+            "should skip tombstoned"
+        );
     }
 
     #[cfg(feature = "parallel")]

@@ -44,7 +44,10 @@ pub fn hybrid_search(
         {
             if vectors.len() > 10_000 {
                 vector_search::parallel_cosine_batch(
-                    query_embedding, vectors, tombstones, vectors.len(),
+                    query_embedding,
+                    vectors,
+                    tombstones,
+                    vectors.len(),
                 )
             } else {
                 vector_search::cosine_similarity_batch(query_embedding, vectors, tombstones)
@@ -85,10 +88,7 @@ fn normalize_scores(scores: &[(usize, f32)]) -> Vec<(usize, f32)> {
         return Vec::new();
     }
 
-    let min = scores
-        .iter()
-        .map(|(_, s)| *s)
-        .fold(f32::INFINITY, f32::min);
+    let min = scores.iter().map(|(_, s)| *s).fold(f32::INFINITY, f32::min);
     let max = scores
         .iter()
         .map(|(_, s)| *s)
@@ -144,7 +144,10 @@ pub fn rrf_hybrid_search(
         {
             if vectors.len() > 10_000 {
                 vector_search::parallel_cosine_batch(
-                    query_embedding, vectors, tombstones, vectors.len(),
+                    query_embedding,
+                    vectors,
+                    tombstones,
+                    vectors.len(),
                 )
             } else {
                 vector_search::cosine_similarity_batch(query_embedding, vectors, tombstones)
@@ -220,7 +223,10 @@ mod tests {
         );
 
         assert!(!results.is_empty());
-        assert_eq!(results[0].0, 0, "doc 0 should be top match for x-direction query");
+        assert_eq!(
+            results[0].0, 0,
+            "doc 0 should be top match for x-direction query"
+        );
     }
 
     #[test]
@@ -268,14 +274,8 @@ mod tests {
         // Doc 0 should rank high (good vector match + contains "rust")
         // Doc 2 should also appear (contains "rust" + decent vector match)
         let top_ids: Vec<usize> = results.iter().map(|(idx, _)| *idx).collect();
-        assert!(
-            top_ids.contains(&0),
-            "doc 0 should appear in results"
-        );
-        assert!(
-            top_ids.contains(&2),
-            "doc 2 should appear in results"
-        );
+        assert!(top_ids.contains(&0), "doc 0 should appear in results");
+        assert!(top_ids.contains(&2), "doc 2 should appear in results");
     }
 
     #[test]
@@ -363,7 +363,10 @@ mod tests {
         );
 
         assert!(!results.is_empty());
-        assert_eq!(results[0].0, 0, "doc 0 should top RRF for x-direction query");
+        assert_eq!(
+            results[0].0, 0,
+            "doc 0 should top RRF for x-direction query"
+        );
     }
 
     #[test]
@@ -382,7 +385,10 @@ mod tests {
         );
 
         assert!(!results.is_empty());
-        assert_eq!(results[0].0, 0, "doc 0 should top RRF for rust programming query");
+        assert_eq!(
+            results[0].0, 0,
+            "doc 0 should top RRF for rust programming query"
+        );
     }
 
     #[test]
@@ -408,15 +414,8 @@ mod tests {
         let (vectors, chunks, tombstones, bm25) = make_test_data();
         let query_emb = vec![0.5, 0.5, 0.0];
 
-        let results = rrf_hybrid_search(
-            &query_emb,
-            "rust",
-            &vectors,
-            &chunks,
-            &tombstones,
-            &bm25,
-            4,
-        );
+        let results =
+            rrf_hybrid_search(&query_emb, "rust", &vectors, &chunks, &tombstones, &bm25, 4);
 
         for (_, score) in &results {
             assert!(*score > 0.0, "RRF scores must be positive");
@@ -430,15 +429,7 @@ mod tests {
         let tombstones: Vec<u8> = Vec::new();
         let bm25 = BM25Index::build(&chunks, &tombstones);
 
-        let results = rrf_hybrid_search(
-            &[],
-            "anything",
-            &vectors,
-            &chunks,
-            &tombstones,
-            &bm25,
-            10,
-        );
+        let results = rrf_hybrid_search(&[], "anything", &vectors, &chunks, &tombstones, &bm25, 10);
 
         assert!(results.is_empty());
     }

@@ -23,9 +23,7 @@ fn bench_deflate(c: &mut Criterion) {
 
     let compressed = clawhdf5_filters::deflate_compress(&data, 6).unwrap();
     c.bench_function("deflate_decompress_8MB", |b| {
-        b.iter(|| {
-            clawhdf5_filters::deflate_decompress(black_box(&compressed), data.len()).unwrap()
-        })
+        b.iter(|| clawhdf5_filters::deflate_decompress(black_box(&compressed), data.len()).unwrap())
     });
 }
 

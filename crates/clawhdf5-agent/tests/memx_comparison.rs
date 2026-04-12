@@ -7,11 +7,11 @@
 //!
 //! These tests verify clawhdf5 meets or exceeds these benchmarks.
 
-use std::time::Instant;
-use tempfile::TempDir;
 use clawhdf5_agent::bm25::BM25Index;
 use clawhdf5_agent::hybrid::hybrid_search;
 use clawhdf5_agent::{AgentMemory, HDF5Memory, MemoryConfig, MemoryEntry};
+use std::time::Instant;
+use tempfile::TempDir;
 
 // ---------------------------------------------------------------------------
 // Deterministic pseudo-random number generator (no external deps)
@@ -188,17 +188,40 @@ fn bench_search_latency_100k_under_90ms() {
     let query_vec = rand_vec(&mut rng, DIM);
 
     // Warm up.
-    let _ = hybrid_search(&query_vec, "benchmark document", &vectors, &chunks, &tombstones, &bm25, 0.7, 0.3, 10);
+    let _ = hybrid_search(
+        &query_vec,
+        "benchmark document",
+        &vectors,
+        &chunks,
+        &tombstones,
+        &bm25,
+        0.7,
+        0.3,
+        10,
+    );
 
     // Measure.
     let mut total_ms: u128 = 0;
     for _ in 0..RUNS {
         let start = Instant::now();
-        let _ = hybrid_search(&query_vec, "benchmark document", &vectors, &chunks, &tombstones, &bm25, 0.7, 0.3, 10);
+        let _ = hybrid_search(
+            &query_vec,
+            "benchmark document",
+            &vectors,
+            &chunks,
+            &tombstones,
+            &bm25,
+            0.7,
+            0.3,
+            10,
+        );
         total_ms += start.elapsed().as_millis();
     }
     let avg_ms = total_ms / RUNS as u128;
-    println!("Avg hybrid search latency at 100K: {}ms (target: <{}ms)", avg_ms, TARGET_MS);
+    println!(
+        "Avg hybrid search latency at 100K: {}ms (target: <{}ms)",
+        avg_ms, TARGET_MS
+    );
     assert!(
         avg_ms < TARGET_MS,
         "Search latency {}ms exceeds {}ms target at 100K records",
@@ -241,7 +264,10 @@ fn bench_bm25_latency_100k_under_10ms() {
         total_ms += start.elapsed().as_millis();
     }
     let avg_ms = total_ms / RUNS as u128;
-    println!("Avg BM25 search latency at 100K: {}ms (target: <{}ms)", avg_ms, TARGET_MS);
+    println!(
+        "Avg BM25 search latency at 100K: {}ms (target: <{}ms)",
+        avg_ms, TARGET_MS
+    );
     assert!(
         avg_ms < TARGET_MS,
         "BM25 latency {}ms exceeds {}ms target at 100K records",
@@ -275,16 +301,39 @@ fn bench_hybrid_search_10k_under_5ms() {
     let query = rand_vec(&mut rng, DIM);
 
     // Warm up.
-    let _ = hybrid_search(&query, "hybrid search document", &vectors, &chunks, &tombstones, &bm25, 0.7, 0.3, 10);
+    let _ = hybrid_search(
+        &query,
+        "hybrid search document",
+        &vectors,
+        &chunks,
+        &tombstones,
+        &bm25,
+        0.7,
+        0.3,
+        10,
+    );
 
     let mut total_ms: u128 = 0;
     for _ in 0..RUNS {
         let start = Instant::now();
-        let _ = hybrid_search(&query, "hybrid search document", &vectors, &chunks, &tombstones, &bm25, 0.7, 0.3, 10);
+        let _ = hybrid_search(
+            &query,
+            "hybrid search document",
+            &vectors,
+            &chunks,
+            &tombstones,
+            &bm25,
+            0.7,
+            0.3,
+            10,
+        );
         total_ms += start.elapsed().as_millis();
     }
     let avg_ms = total_ms / RUNS as u128;
-    println!("Avg hybrid search latency at 10K (dim={}): {}ms (target: <{}ms)", DIM, avg_ms, TARGET_MS);
+    println!(
+        "Avg hybrid search latency at 10K (dim={}): {}ms (target: <{}ms)",
+        DIM, avg_ms, TARGET_MS
+    );
     assert!(
         avg_ms < TARGET_MS,
         "Hybrid search latency {}ms exceeds {}ms at 10K records",

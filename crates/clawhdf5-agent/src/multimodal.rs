@@ -270,11 +270,7 @@ impl MultiModalStore {
     pub fn get_observations(&self, modality: &Modality) -> Vec<&Observation> {
         self.records
             .iter()
-            .filter_map(|r| {
-                r.observation
-                    .as_ref()
-                    .filter(|o| &o.modality == modality)
-            })
+            .filter_map(|r| r.observation.as_ref().filter(|o| &o.modality == modality))
             .collect()
     }
 
@@ -379,11 +375,7 @@ fn cosine_sim_prenorm(query: &[f32], q_norm: f32, candidate: &[f32]) -> f32 {
     if denom == 0.0 {
         return 0.0;
     }
-    let dot: f32 = query
-        .iter()
-        .zip(candidate.iter())
-        .map(|(a, b)| a * b)
-        .sum();
+    let dot: f32 = query.iter().zip(candidate.iter()).map(|(a, b)| a * b).sum();
     dot / denom
 }
 
@@ -553,7 +545,12 @@ mod tests {
             text_content: None,
             media_ref: Some(MediaRef::path("/img/cat.jpg", "image/jpeg")),
             embeddings: vec![ModalEmbedding::new(Modality::Image, emb, "clip-vit-large")],
-            observation: Some(Observation::new("cat on mat", "domestic cat", 0.9, Modality::Image)),
+            observation: Some(Observation::new(
+                "cat on mat",
+                "domestic cat",
+                0.9,
+                Modality::Image,
+            )),
             timestamp: 1.0,
             metadata: HashMap::new(),
         }
@@ -613,8 +610,8 @@ mod tests {
     #[test]
     fn get_observations_filters_by_modality() {
         let mut store = MultiModalStore::new();
-        store.add_record(make_image_record(vec![1.0, 0.0]));  // has observation
-        store.add_record(make_text_record("no obs", vec![0.0, 1.0]));  // no observation
+        store.add_record(make_image_record(vec![1.0, 0.0])); // has observation
+        store.add_record(make_text_record("no obs", vec![0.0, 1.0])); // no observation
         let obs = store.get_observations(&Modality::Image);
         assert_eq!(obs.len(), 1);
         assert_eq!(obs[0].interpretation, "domestic cat");
@@ -691,7 +688,11 @@ mod tests {
     #[test]
     fn search_empty_store_returns_empty() {
         let store = MultiModalStore::new();
-        assert!(store.search_by_modality(&Modality::Text, &[1.0, 0.0], 5).is_empty());
+        assert!(
+            store
+                .search_by_modality(&Modality::Text, &[1.0, 0.0], 5)
+                .is_empty()
+        );
         assert!(store.search_cross_modal(&[1.0, 0.0], 5).is_empty());
     }
 
@@ -707,9 +708,9 @@ mod tests {
     #[test]
     fn search_sorted_descending() {
         let mut store = MultiModalStore::new();
-        store.add_record(make_text_record("low",  vec![0.0, 1.0]));  // sim ≈ 0
-        store.add_record(make_text_record("high", vec![1.0, 0.0]));  // sim ≈ 1
-        store.add_record(make_text_record("mid",  vec![1.0, 1.0]));  // sim ≈ 0.707
+        store.add_record(make_text_record("low", vec![0.0, 1.0])); // sim ≈ 0
+        store.add_record(make_text_record("high", vec![1.0, 0.0])); // sim ≈ 1
+        store.add_record(make_text_record("mid", vec![1.0, 1.0])); // sim ≈ 0.707
 
         let results = store.search_by_modality(&Modality::Text, &[1.0, 0.0], 3);
         assert_eq!(results.len(), 3);
@@ -731,7 +732,11 @@ mod tests {
             media_ref: None,
             embeddings: vec![
                 ModalEmbedding::new(Modality::Image, vec![1.0, 0.0, 0.0], "clip-vit-large"),
-                ModalEmbedding::new(Modality::Text, vec![0.0, 1.0, 0.0], "text-embedding-3-small"),
+                ModalEmbedding::new(
+                    Modality::Text,
+                    vec![0.0, 1.0, 0.0],
+                    "text-embedding-3-small",
+                ),
             ],
             observation: None,
             timestamp: 42.0,

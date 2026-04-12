@@ -42,32 +42,118 @@ impl Default for GateConfig {
 /// Built-in trivial phrases for exact-match layer.
 const TRIVIAL_PHRASES: &[&str] = &[
     // Single words
-    "ok", "yes", "no", "sure", "yep", "nope", "k", "yeah", "nah", "alright",
-    "right", "cool", "nice", "great", "perfect", "fine", "agreed", "understood",
-    "noted", "thanks", "ty", "thx", "lol", "lmao", "haha", "hm", "hmm", "ah",
-    "oh", "hey", "hi", "hello", "bye", "goodbye", "yo", "sup", "wow", "omg",
-    "brb", "gtg", "idk", "imo", "tbh", "smh", "ikr", "np", "gg", "ez", "rip",
-    "oof", "yikes", "meh", "duh", "oops", "ugh", "yay", "woo", "okay",
+    "ok",
+    "yes",
+    "no",
+    "sure",
+    "yep",
+    "nope",
+    "k",
+    "yeah",
+    "nah",
+    "alright",
+    "right",
+    "cool",
+    "nice",
+    "great",
+    "perfect",
+    "fine",
+    "agreed",
+    "understood",
+    "noted",
+    "thanks",
+    "ty",
+    "thx",
+    "lol",
+    "lmao",
+    "haha",
+    "hm",
+    "hmm",
+    "ah",
+    "oh",
+    "hey",
+    "hi",
+    "hello",
+    "bye",
+    "goodbye",
+    "yo",
+    "sup",
+    "wow",
+    "omg",
+    "brb",
+    "gtg",
+    "idk",
+    "imo",
+    "tbh",
+    "smh",
+    "ikr",
+    "np",
+    "gg",
+    "ez",
+    "rip",
+    "oof",
+    "yikes",
+    "meh",
+    "duh",
+    "oops",
+    "ugh",
+    "yay",
+    "woo",
+    "okay",
     // Two-word phrases
-    "got it", "sounds good", "makes sense", "that works", "no problem",
-    "no worries", "of course", "my bad", "my mistake", "will do",
-    "good point", "fair enough", "for sure", "all good", "thank you",
-    "good luck", "take care", "see ya", "you too", "same here",
-    "oh well", "oh no", "ha ha", "he he", "me too",
+    "got it",
+    "sounds good",
+    "makes sense",
+    "that works",
+    "no problem",
+    "no worries",
+    "of course",
+    "my bad",
+    "my mistake",
+    "will do",
+    "good point",
+    "fair enough",
+    "for sure",
+    "all good",
+    "thank you",
+    "good luck",
+    "take care",
+    "see ya",
+    "you too",
+    "same here",
+    "oh well",
+    "oh no",
+    "ha ha",
+    "he he",
+    "me too",
     // Short phrases
-    "ok sounds good", "yes thats right", "no thats wrong", "that makes sense",
-    "thats fine", "sure thing", "youre right", "i agree", "i see",
-    "i understand", "ok cool", "yep got it", "sounds great", "no doubt",
-    "for real", "oh i see", "ok thanks", "thanks a lot", "much appreciated",
+    "ok sounds good",
+    "yes thats right",
+    "no thats wrong",
+    "that makes sense",
+    "thats fine",
+    "sure thing",
+    "youre right",
+    "i agree",
+    "i see",
+    "i understand",
+    "ok cool",
+    "yep got it",
+    "sounds great",
+    "no doubt",
+    "for real",
+    "oh i see",
+    "ok thanks",
+    "thanks a lot",
+    "much appreciated",
 ];
 
 /// Words considered trivial for the ratio check.
 const TRIVIAL_WORDS: &[&str] = &[
-    "ok", "yes", "no", "sure", "yeah", "nah", "right", "cool", "nice", "great",
-    "perfect", "fine", "thanks", "lol", "haha", "wow", "oh", "ah", "hmm", "hey",
-    "hi", "hello", "bye", "yo", "the", "a", "an", "i", "it", "is", "was", "and",
-    "or", "but", "so", "just", "very", "really", "too", "also", "well", "like",
-    "um", "uh",
+    "ok", "yes", "no", "sure", "yeah", "nah", "right", "cool", "nice", "great", "perfect", "fine",
+    "thanks", "lol", "haha", "wow", "oh", "ah", "hmm", "hey", "hi", "hello", "bye", "yo", "the",
+    "a", "an", "i", "it", "is", "was", "and", "or", "but", "so", "just", "very", "really", "too",
+    "also", "well", "like", "um", "uh",
 ];
 
 /// Normalize text: lowercase, trim, collapse internal whitespace, strip non-alphanumeric
@@ -109,8 +195,7 @@ impl DecisionGate {
         for phrase in &config.custom_trivial {
             trivial_phrases.insert(normalize(phrase));
         }
-        let trivial_words: HashSet<String> =
-            TRIVIAL_WORDS.iter().map(|s| s.to_string()).collect();
+        let trivial_words: HashSet<String> = TRIVIAL_WORDS.iter().map(|s| s.to_string()).collect();
         Self {
             config,
             trivial_phrases,
@@ -279,10 +364,7 @@ mod tests {
     #[test]
     fn test_whitespace_handling() {
         let gate = default_gate();
-        assert!(matches!(
-            gate.should_save("  ok  "),
-            SaveDecision::Skip(_)
-        ));
+        assert!(matches!(gate.should_save("  ok  "), SaveDecision::Skip(_)));
         // "hello world" — 2 words < 3 min_word_count → Skip
         assert!(matches!(
             gate.should_save("  hello  world  "),
@@ -300,7 +382,11 @@ mod tests {
     fn test_gate_under_1_microsecond() {
         let gate = default_gate();
         // Use generous limit for debug builds; in release mode this is well under 1ms.
-        let limit_us: u128 = if cfg!(debug_assertions) { 50_000 } else { 1_000 };
+        let limit_us: u128 = if cfg!(debug_assertions) {
+            50_000
+        } else {
+            1_000
+        };
 
         let start = Instant::now();
         for _ in 0..1000 {

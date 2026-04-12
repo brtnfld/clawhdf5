@@ -5,12 +5,12 @@
 
 use std::path::Path;
 
+use crate::MemoryConfig;
+use crate::MemoryError;
 use crate::cache::MemoryCache;
 use crate::knowledge::KnowledgeCache;
 use crate::schema;
 use crate::session::SessionCache;
-use crate::MemoryConfig;
-use crate::MemoryError;
 
 /// Write all in-memory state to an HDF5 file on disk.
 pub fn write_to_disk(

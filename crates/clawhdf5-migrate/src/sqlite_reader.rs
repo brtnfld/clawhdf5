@@ -141,9 +141,8 @@ fn read_chunks(
 }
 
 fn read_sessions(conn: &Connection) -> SqlResult<Vec<Session>> {
-    let mut stmt = conn.prepare(
-        "SELECT id, start_idx, end_idx, channel, timestamp, summary FROM sessions",
-    )?;
+    let mut stmt =
+        conn.prepare("SELECT id, start_idx, end_idx, channel, timestamp, summary FROM sessions")?;
     let rows = stmt.query_map([], |row| {
         Ok(Session {
             id: row.get(0)?,
@@ -171,8 +170,7 @@ fn read_entities(conn: &Connection) -> SqlResult<Vec<Entity>> {
 }
 
 fn read_relations(conn: &Connection) -> SqlResult<Vec<Relation>> {
-    let mut stmt =
-        conn.prepare("SELECT src, tgt, relation, weight, timestamp FROM relations")?;
+    let mut stmt = conn.prepare("SELECT src, tgt, relation, weight, timestamp FROM relations")?;
     let rows = stmt.query_map([], |row| {
         Ok(Relation {
             src: row.get(0)?,

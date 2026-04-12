@@ -1,4 +1,3 @@
-use criterion::{Criterion, criterion_group, criterion_main};
 use clawhdf5_format::chunked_read::read_chunked_data;
 use clawhdf5_format::data_layout::DataLayout;
 use clawhdf5_format::data_read::{read_as_f64, read_raw_data};
@@ -11,6 +10,7 @@ use clawhdf5_format::message_type::MessageType;
 use clawhdf5_format::object_header::ObjectHeader;
 use clawhdf5_format::signature::find_signature;
 use clawhdf5_format::superblock::Superblock;
+use criterion::{Criterion, criterion_group, criterion_main};
 
 const N: usize = 1_000_000;
 

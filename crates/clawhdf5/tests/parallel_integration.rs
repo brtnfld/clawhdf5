@@ -249,9 +249,7 @@ mod parallel_tests {
     #[test]
     fn parallel_matches_sequential() {
         use clawhdf5_format::chunked_read::ChunkInfo;
-        use clawhdf5_format::filter_pipeline::{
-            FILTER_DEFLATE, FilterDescription, FilterPipeline,
-        };
+        use clawhdf5_format::filter_pipeline::{FILTER_DEFLATE, FilterDescription, FilterPipeline};
         use clawhdf5_format::filters::compress_chunk;
 
         let pipeline = FilterPipeline {
@@ -346,8 +344,7 @@ mod fast_compression_tests {
         let compressed = clawhdf5_filters::deflate_compress_miniz(&data, 6).unwrap();
 
         let miniz_result = clawhdf5_filters::deflate_decompress_miniz(&compressed).unwrap();
-        let current_result =
-            clawhdf5_filters::deflate_decompress(&compressed, data.len()).unwrap();
+        let current_result = clawhdf5_filters::deflate_decompress(&compressed, data.len()).unwrap();
 
         assert_eq!(miniz_result, data);
         assert_eq!(current_result, data);
@@ -368,8 +365,7 @@ mod fast_compression_tests {
 
         // Compress with miniz, decompress with current backend
         let compressed2 = clawhdf5_filters::deflate_compress_miniz(&data, 6).unwrap();
-        let decompressed2 =
-            clawhdf5_filters::deflate_decompress(&compressed2, data.len()).unwrap();
+        let decompressed2 = clawhdf5_filters::deflate_decompress(&compressed2, data.len()).unwrap();
         assert_eq!(decompressed2, data);
     }
 

@@ -7,11 +7,11 @@ use clawhdf5::AttrValue;
 use clawhdf5::FillTime;
 use clawhdf5_format::datatype::{CharacterSet, Datatype, StringPadding};
 
+use crate::MemoryConfig;
+use crate::MemoryError;
 use crate::cache::MemoryCache;
 use crate::knowledge::KnowledgeCache;
 use crate::session::SessionCache;
-use crate::MemoryConfig;
-use crate::MemoryError;
 
 pub const SCHEMA_VERSION: &str = "1.0";
 pub const ZEROCLAW_VERSION: &str = "0.8.0";
@@ -28,10 +28,7 @@ pub fn build_hdf5_file(
     // /meta group with schema attributes
     let mut meta = builder.create_group("meta");
     meta.set_attr("schema_version", AttrValue::String(SCHEMA_VERSION.into()));
-    meta.set_attr(
-        "created_at",
-        AttrValue::String(config.created_at.clone()),
-    );
+    meta.set_attr("created_at", AttrValue::String(config.created_at.clone()));
     meta.set_attr("agent_id", AttrValue::String(config.agent_id.clone()));
     meta.set_attr("embedder", AttrValue::String(config.embedder.clone()));
     meta.set_attr("embedding_dim", AttrValue::I64(config.embedding_dim as i64));
@@ -55,7 +52,9 @@ pub fn build_hdf5_file(
     // /knowledge_graph group
     build_knowledge_group(&mut builder, knowledge)?;
 
-    builder.finish().map_err(|e| MemoryError::Hdf5(e.to_string()))
+    builder
+        .finish()
+        .map_err(|e| MemoryError::Hdf5(e.to_string()))
 }
 
 fn build_memory_group(
@@ -153,7 +152,11 @@ fn build_sessions_group(
     let ids: Vec<String> = sessions.entries.iter().map(|e| e.id.clone()).collect();
     write_string_dataset(&mut group, "ids", &ids, false);
 
-    let start_idxs: Vec<i64> = sessions.entries.iter().map(|e| e.start_idx as i64).collect();
+    let start_idxs: Vec<i64> = sessions
+        .entries
+        .iter()
+        .map(|e| e.start_idx as i64)
+        .collect();
     group
         .create_dataset("start_idxs")
         .with_i64_data(&start_idxs);
@@ -198,11 +201,7 @@ fn build_knowledge_group(
         .collect();
     write_string_dataset(&mut group, "entity_types", &entity_types, false);
 
-    let emb_idxs: Vec<i64> = knowledge
-        .entities
-        .iter()
-        .map(|e| e.embedding_idx)
-        .collect();
+    let emb_idxs: Vec<i64> = knowledge.entities.iter().map(|e| e.embedding_idx).collect();
     group
         .create_dataset("entity_emb_idxs")
         .with_i64_data(&emb_idxs);
@@ -548,10 +547,7 @@ fn read_string_dataset_from_group(
         .map_err(|e| MemoryError::Hdf5(format!("cannot read strings from {name}: {e}")))
 }
 
-fn read_f32_dataset(
-    group: &clawhdf5::Group<'_>,
-    name: &str,
-) -> Result<Vec<f32>, MemoryError> {
+fn read_f32_dataset(group: &clawhdf5::Group<'_>, name: &str) -> Result<Vec<f32>, MemoryError> {
     let ds = group
         .dataset(name)
         .map_err(|e| MemoryError::Hdf5(format!("cannot read {name}: {e}")))?;
@@ -565,10 +561,7 @@ fn read_f32_dataset(
         .map_err(|e| MemoryError::Hdf5(format!("cannot read f32 from {name}: {e}")))
 }
 
-fn read_f64_dataset(
-    group: &clawhdf5::Group<'_>,
-    name: &str,
-) -> Result<Vec<f64>, MemoryError> {
+fn read_f64_dataset(group: &clawhdf5::Group<'_>, name: &str) -> Result<Vec<f64>, MemoryError> {
     let ds = group
         .dataset(name)
         .map_err(|e| MemoryError::Hdf5(format!("cannot read {name}: {e}")))?;
@@ -582,10 +575,7 @@ fn read_f64_dataset(
         .map_err(|e| MemoryError::Hdf5(format!("cannot read f64 from {name}: {e}")))
 }
 
-fn read_i64_dataset(
-    group: &clawhdf5::Group<'_>,
-    name: &str,
-) -> Result<Vec<i64>, MemoryError> {
+fn read_i64_dataset(group: &clawhdf5::Group<'_>, name: &str) -> Result<Vec<i64>, MemoryError> {
     let ds = group
         .dataset(name)
         .map_err(|e| MemoryError::Hdf5(format!("cannot read {name}: {e}")))?;
@@ -599,10 +589,7 @@ fn read_i64_dataset(
         .map_err(|e| MemoryError::Hdf5(format!("cannot read i64 from {name}: {e}")))
 }
 
-fn read_u8_dataset(
-    group: &clawhdf5::Group<'_>,
-    name: &str,
-) -> Result<Vec<u8>, MemoryError> {
+fn read_u8_dataset(group: &clawhdf5::Group<'_>, name: &str) -> Result<Vec<u8>, MemoryError> {
     let ds = group
         .dataset(name)
         .map_err(|e| MemoryError::Hdf5(format!("cannot read {name}: {e}")))?;

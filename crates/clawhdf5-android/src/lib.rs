@@ -186,12 +186,16 @@ pub extern "C" fn edgehdf5_hybrid_search(
         Some(s) => s,
         None => return 0,
     };
-    let query_embedding = unsafe {
-        std::slice::from_raw_parts(query_embedding_ptr, query_embedding_len as usize)
-    };
+    let query_embedding =
+        unsafe { std::slice::from_raw_parts(query_embedding_ptr, query_embedding_len as usize) };
 
-    let results =
-        mem.hybrid_search(query_embedding, &query_text, vector_weight, keyword_weight, max_results as usize);
+    let results = mem.hybrid_search(
+        query_embedding,
+        &query_text,
+        vector_weight,
+        keyword_weight,
+        max_results as usize,
+    );
 
     let count = results.len().min(max_results as usize);
     for (i, result) in results.iter().take(count).enumerate() {
@@ -249,7 +253,13 @@ pub extern "C" fn edgehdf5_add_session(
         None => return -1,
     };
 
-    match mem.add_session(&id, start_idx as usize, end_idx as usize, &channel, &summary) {
+    match mem.add_session(
+        &id,
+        start_idx as usize,
+        end_idx as usize,
+        &channel,
+        &summary,
+    ) {
         Ok(()) => 0,
         Err(_) => -1,
     }

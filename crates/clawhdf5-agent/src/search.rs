@@ -42,7 +42,11 @@ impl HDF5Memory {
                 }
             })
             .collect();
-        results.sort_by(|a, b| b.score.partial_cmp(&a.score).unwrap_or(std::cmp::Ordering::Equal));
+        results.sort_by(|a, b| {
+            b.score
+                .partial_cmp(&a.score)
+                .unwrap_or(std::cmp::Ordering::Equal)
+        });
 
         let hit_indices: Vec<usize> = results.iter().map(|r| r.index).collect();
         self.apply_hebbian_boost(&hit_indices);

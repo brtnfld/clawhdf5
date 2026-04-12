@@ -34,13 +34,46 @@ const RAW_BYTES_PER_FLOAT: usize = 4;
 // ---------------------------------------------------------------------------
 
 const WORD_BANK: &[&str] = &[
-    "system", "architecture", "distributed", "memory", "vector", "embedding",
-    "agent", "knowledge", "search", "retrieval", "temporal", "semantic",
-    "episodic", "working", "consolidation", "importance", "activation",
-    "cosine", "similarity", "hybrid", "keyword", "BM25", "index",
-    "session", "context", "token", "chunk", "overlap", "inference",
-    "pipeline", "latency", "throughput", "benchmark", "performance",
-    "Rust", "async", "parallel", "concurrent", "thread", "atomic",
+    "system",
+    "architecture",
+    "distributed",
+    "memory",
+    "vector",
+    "embedding",
+    "agent",
+    "knowledge",
+    "search",
+    "retrieval",
+    "temporal",
+    "semantic",
+    "episodic",
+    "working",
+    "consolidation",
+    "importance",
+    "activation",
+    "cosine",
+    "similarity",
+    "hybrid",
+    "keyword",
+    "BM25",
+    "index",
+    "session",
+    "context",
+    "token",
+    "chunk",
+    "overlap",
+    "inference",
+    "pipeline",
+    "latency",
+    "throughput",
+    "benchmark",
+    "performance",
+    "Rust",
+    "async",
+    "parallel",
+    "concurrent",
+    "thread",
+    "atomic",
 ];
 
 fn make_text(record_idx: usize, target_chars: usize) -> String {
@@ -123,23 +156,20 @@ fn measure_footprint(
     let mut memory = HDF5Memory::create(config).expect("HDF5Memory::create failed");
 
     let entries = make_entries(n, text_len);
-    let raw_bytes = entries.iter().map(|e| {
-        e.chunk.len() + e.embedding.len() * RAW_BYTES_PER_FLOAT
-    }).sum::<usize>() as u64;
+    let raw_bytes = entries
+        .iter()
+        .map(|e| e.chunk.len() + e.embedding.len() * RAW_BYTES_PER_FLOAT)
+        .sum::<usize>() as u64;
 
     // Batch ingest, measure time
     let t0 = Instant::now();
     memory.save_batch(entries).expect("save_batch failed");
     let ingest_ms = t0.elapsed().as_secs_f64() * 1000.0;
 
-    let file_bytes = std::fs::metadata(&h5_path)
-        .map(|m| m.len())
-        .unwrap_or(0);
+    let file_bytes = std::fs::metadata(&h5_path).map(|m| m.len()).unwrap_or(0);
 
     let wal_path = h5_path.with_extension("h5.wal");
-    let wal_bytes = std::fs::metadata(&wal_path)
-        .map(|m| m.len())
-        .unwrap_or(0);
+    let wal_bytes = std::fs::metadata(&wal_path).map(|m| m.len()).unwrap_or(0);
 
     FootprintResult {
         n,
@@ -238,7 +268,10 @@ fn main() {
         results.push(measure_footprint(n, 200, false, true));
     }
     eprintln!();
-    print_table(&results, "Medium Text (200 chars), Gzip Compression (level 6), No WAL");
+    print_table(
+        &results,
+        "Medium Text (200 chars), Gzip Compression (level 6), No WAL",
+    );
 
     // --- Text length comparison at 10K records ---
     println!("### Text Length Comparison at 10K Records (no compression, no WAL)");
@@ -271,7 +304,11 @@ fn main() {
     println!();
     let no_wal = measure_footprint(1_000, 200, false, false);
     let with_wal = measure_footprint(1_000, 200, true, false);
-    println!("  No WAL:   file={:>10}  ingest={:.1}ms", fmt_bytes(no_wal.file_bytes), no_wal.ingest_ms);
+    println!(
+        "  No WAL:   file={:>10}  ingest={:.1}ms",
+        fmt_bytes(no_wal.file_bytes),
+        no_wal.ingest_ms
+    );
     println!(
         "  With WAL: file={:>10}  WAL={:>8}  ingest={:.1}ms  (+{:.0}% latency)",
         fmt_bytes(with_wal.file_bytes),
@@ -289,17 +326,27 @@ fn main() {
     let r10k = measure_footprint(10_000, 200, false, false);
     let r10k_comp = measure_footprint(10_000, 200, false, true);
     println!("  Uncompressed: {}", fmt_bytes(r10k.file_bytes));
-    println!("  Compressed:   {} ({:.1}x ratio)", fmt_bytes(r10k_comp.file_bytes), r10k_comp.compression_ratio());
-    println!("  Per record:   {} (uncompressed)", fmt_bytes(r10k.bytes_per_record()));
+    println!(
+        "  Compressed:   {} ({:.1}x ratio)",
+        fmt_bytes(r10k_comp.file_bytes),
+        r10k_comp.compression_ratio()
+    );
+    println!(
+        "  Per record:   {} (uncompressed)",
+        fmt_bytes(r10k.bytes_per_record())
+    );
     println!("  Throughput:   {:.0} records/sec", r10k.records_per_sec());
     println!();
     println!("At 100K records:");
     let r100k = measure_footprint(100_000, 200, false, false);
     let r100k_comp = measure_footprint(100_000, 200, false, true);
     println!("  Uncompressed: {}", fmt_bytes(r100k.file_bytes));
-    println!("  Compressed:   {} ({:.1}x ratio)", fmt_bytes(r100k_comp.file_bytes), r100k_comp.compression_ratio());
+    println!(
+        "  Compressed:   {} ({:.1}x ratio)",
+        fmt_bytes(r100k_comp.file_bytes),
+        r100k_comp.compression_ratio()
+    );
 }
-
 
 // ---------------------------------------------------------------------------
 // Ephemeral tier microbenchmark

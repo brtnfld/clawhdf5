@@ -69,9 +69,10 @@ impl BM25Index {
         type QueryTerm<'a> = (&'a str, f32, &'a [(usize, u32)]);
         let mut query_terms: Vec<QueryTerm<'_>> = Vec::new();
         for token in &tokens {
-            if let (Some(postings), Some(&idf)) =
-                (self.inverted.get(token.as_str()), self.idf_cache.get(token.as_str()))
-            {
+            if let (Some(postings), Some(&idf)) = (
+                self.inverted.get(token.as_str()),
+                self.idf_cache.get(token.as_str()),
+            ) {
                 query_terms.push((token, idf, postings));
             }
         }
@@ -119,16 +120,21 @@ impl BM25Index {
                     let final_score = *entry;
                     if final_score > threshold && top_k_scores.len() >= k {
                         // Update threshold
-                        top_k_scores.sort_by(|a, b| b.partial_cmp(a).unwrap_or(std::cmp::Ordering::Equal));
+                        top_k_scores
+                            .sort_by(|a, b| b.partial_cmp(a).unwrap_or(std::cmp::Ordering::Equal));
                         if final_score > top_k_scores[k - 1] {
                             top_k_scores[k - 1] = final_score;
-                            top_k_scores.sort_by(|a, b| b.partial_cmp(a).unwrap_or(std::cmp::Ordering::Equal));
+                            top_k_scores.sort_by(|a, b| {
+                                b.partial_cmp(a).unwrap_or(std::cmp::Ordering::Equal)
+                            });
                             threshold = top_k_scores[k - 1];
                         }
                     } else if top_k_scores.len() < k {
                         top_k_scores.push(final_score);
                         if top_k_scores.len() == k {
-                            top_k_scores.sort_by(|a, b| b.partial_cmp(a).unwrap_or(std::cmp::Ordering::Equal));
+                            top_k_scores.sort_by(|a, b| {
+                                b.partial_cmp(a).unwrap_or(std::cmp::Ordering::Equal)
+                            });
                             threshold = top_k_scores[k - 1];
                         }
                     }
@@ -251,7 +257,10 @@ mod tests {
         let results = index.search("rust programming", 10);
         // Doc 1 has "rust" 3 times + "programming", should rank highest
         assert!(results.len() >= 2);
-        assert_eq!(results[0].0, 1, "doc with most 'rust' mentions should rank first");
+        assert_eq!(
+            results[0].0, 1,
+            "doc with most 'rust' mentions should rank first"
+        );
         assert_eq!(results[1].0, 0);
     }
 
@@ -282,10 +291,7 @@ mod tests {
 
     #[test]
     fn rebuild_after_changes() {
-        let docs = vec![
-            "hello world".to_string(),
-            "goodbye world".to_string(),
-        ];
+        let docs = vec!["hello world".to_string(), "goodbye world".to_string()];
         let tombstones = vec![0, 0];
         let mut index = BM25Index::build(&docs, &tombstones);
 
@@ -439,7 +445,10 @@ mod tests {
         // All top-10 doc IDs should appear in top-100
         let all_100_ids: Vec<usize> = results_100.iter().map(|r| r.0).collect();
         for (idx, _) in &results_10 {
-            assert!(all_100_ids.contains(idx), "doc {idx} missing from k=100 results");
+            assert!(
+                all_100_ids.contains(idx),
+                "doc {idx} missing from k=100 results"
+            );
         }
     }
 }

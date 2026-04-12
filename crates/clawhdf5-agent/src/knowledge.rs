@@ -143,9 +143,7 @@ fn levenshtein(a: &str, b: &str) -> usize {
         curr[0] = i;
         for j in 1..=nb {
             let cost = if a[i - 1] == b[j - 1] { 0 } else { 1 };
-            curr[j] = (curr[j - 1] + 1)
-                .min(prev[j] + 1)
-                .min(prev[j - 1] + cost);
+            curr[j] = (curr[j - 1] + 1).min(prev[j] + 1).min(prev[j - 1] + cost);
         }
         std::mem::swap(&mut prev, &mut curr);
     }
@@ -385,11 +383,7 @@ impl KnowledgeCache {
     /// Extract the subgraph reachable from any of `seed_ids` within `max_depth`
     /// hops.  Returns `(entities, relations)` where `relations` contains only
     /// those edges whose both endpoints are in the entity set.
-    pub fn get_subgraph(
-        &self,
-        seed_ids: &[u64],
-        max_depth: usize,
-    ) -> (Vec<Entity>, Vec<Relation>) {
+    pub fn get_subgraph(&self, seed_ids: &[u64], max_depth: usize) -> (Vec<Entity>, Vec<Relation>) {
         let mut entity_ids: HashSet<u64> = HashSet::new();
 
         // Seed all starting nodes.
@@ -594,7 +588,10 @@ mod tests {
         cache.add_alias("my son", id as i64);
 
         let resolved = cache.resolve_aliases("what does my son do?");
-        assert!(resolved.contains("henry"), "expected 'henry' in '{resolved}'");
+        assert!(
+            resolved.contains("henry"),
+            "expected 'henry' in '{resolved}'"
+        );
     }
 
     #[test]
@@ -606,8 +603,14 @@ mod tests {
         cache.add_alias("our main client", a as i64);
 
         let resolved = cache.resolve_aliases("what does my son do at our main client?");
-        assert!(resolved.contains("henry"), "expected 'henry' in '{resolved}'");
-        assert!(resolved.contains("acme corp"), "expected 'acme corp' in '{resolved}'");
+        assert!(
+            resolved.contains("henry"),
+            "expected 'henry' in '{resolved}'"
+        );
+        assert!(
+            resolved.contains("acme corp"),
+            "expected 'acme corp' in '{resolved}'"
+        );
     }
 
     #[test]
@@ -637,7 +640,10 @@ mod tests {
         cache.add_alias("henry", id as i64);
 
         let resolved = cache.resolve_aliases("Tell HENRY about it");
-        assert!(resolved.contains("henry"), "expected 'henry' in '{resolved}'");
+        assert!(
+            resolved.contains("henry"),
+            "expected 'henry' in '{resolved}'"
+        );
     }
 
     #[test]
@@ -673,10 +679,15 @@ mod tests {
         let id = cache.add_entity("Alice", "person", -1);
         {
             let entity = cache.get_entity_mut(id).unwrap();
-            entity.properties.insert("role".to_string(), "engineer".to_string());
+            entity
+                .properties
+                .insert("role".to_string(), "engineer".to_string());
         }
         let entity = cache.get_entity(id).unwrap();
-        assert_eq!(entity.properties.get("role").map(String::as_str), Some("engineer"));
+        assert_eq!(
+            entity.properties.get("role").map(String::as_str),
+            Some("engineer")
+        );
     }
 
     // -----------------------------------------------------------------------
@@ -755,8 +766,14 @@ mod tests {
     fn test_relation_type_from_str_known_variants() {
         assert_eq!(RelationType::from_str("temporal"), RelationType::Temporal);
         assert_eq!(RelationType::from_str("causal"), RelationType::Causal);
-        assert_eq!(RelationType::from_str("associative"), RelationType::Associative);
-        assert_eq!(RelationType::from_str("hierarchical"), RelationType::Hierarchical);
+        assert_eq!(
+            RelationType::from_str("associative"),
+            RelationType::Associative
+        );
+        assert_eq!(
+            RelationType::from_str("hierarchical"),
+            RelationType::Hierarchical
+        );
     }
 
     #[test]
@@ -1030,12 +1047,22 @@ mod tests {
         let result = cache.spreading_activation(&[a], 0.5, 0.01, 1);
 
         let score_of = |id: u64| -> f32 {
-            result.iter().find(|&&(eid, _)| eid == id).map(|&(_, s)| s).unwrap_or(0.0)
+            result
+                .iter()
+                .find(|&&(eid, _)| eid == id)
+                .map(|&(_, s)| s)
+                .unwrap_or(0.0)
         };
 
         // A starts with 1.0; B gets 0.5 after 1 step; C gets nothing (2 hops, only 1 step).
-        assert!(score_of(a) >= score_of(b), "A should have higher or equal activation than B");
-        assert!(score_of(b) > score_of(c), "B should have more activation than C (C unreachable in 1 step)");
+        assert!(
+            score_of(a) >= score_of(b),
+            "A should have higher or equal activation than B"
+        );
+        assert!(
+            score_of(b) > score_of(c),
+            "B should have more activation than C (C unreachable in 1 step)"
+        );
     }
 
     #[test]
@@ -1063,7 +1090,11 @@ mod tests {
 
         // With a very high min_activation, only the seed should appear.
         let result = cache.spreading_activation(&[a], 0.5, 10.0, 5);
-        assert_eq!(result.len(), 0, "all activations below min threshold should be filtered");
+        assert_eq!(
+            result.len(),
+            0,
+            "all activations below min threshold should be filtered"
+        );
     }
 
     // -----------------------------------------------------------------------
@@ -1094,8 +1125,14 @@ mod tests {
         cache.add_relation(a, b, "knows", 0.9);
 
         let ctx = cache.get_entity_context(a);
-        assert!(ctx.contains("knows"), "context should mention the relation type");
-        assert!(ctx.contains("Bob"), "context should mention the target entity");
+        assert!(
+            ctx.contains("knows"),
+            "context should mention the relation type"
+        );
+        assert!(
+            ctx.contains("Bob"),
+            "context should mention the target entity"
+        );
     }
 
     #[test]
@@ -1116,7 +1153,9 @@ mod tests {
         let id = cache.add_entity("Alice", "person", -1);
         {
             let entity = cache.get_entity_mut(id).unwrap();
-            entity.properties.insert("occupation".to_string(), "engineer".to_string());
+            entity
+                .properties
+                .insert("occupation".to_string(), "engineer".to_string());
         }
         let ctx = cache.get_entity_context(id);
         assert!(ctx.contains("occupation"));

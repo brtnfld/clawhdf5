@@ -22,9 +22,7 @@
 use std::time::Instant;
 
 use clawhdf5_agent::bm25::BM25Index;
-use clawhdf5_agent::consolidation::{
-    ConsolidationConfig, ConsolidationEngine, MemorySource,
-};
+use clawhdf5_agent::consolidation::{ConsolidationConfig, ConsolidationEngine, MemorySource};
 use clawhdf5_agent::hybrid::hybrid_search;
 
 const EMBEDDING_DIM: usize = 384;
@@ -84,11 +82,7 @@ fn make_embedding(seed: usize) -> Vec<f32> {
 // BM25 search helper (operates on ConsolidationEngine records)
 // ---------------------------------------------------------------------------
 
-fn search_engine(
-    engine: &ConsolidationEngine,
-    query: &str,
-    k: usize,
-) -> Vec<(usize, f32)> {
+fn search_engine(engine: &ConsolidationEngine, query: &str, k: usize) -> Vec<(usize, f32)> {
     let records = engine.records();
     if records.is_empty() {
         return Vec::new();
@@ -99,7 +93,17 @@ fn search_engine(
     let zero_emb = vec![0.0f32; EMBEDDING_DIM];
 
     let bm25 = BM25Index::build(&docs, &tombstones);
-    hybrid_search(&zero_emb, query, &vectors, &docs, &tombstones, &bm25, 0.0, 1.0, k)
+    hybrid_search(
+        &zero_emb,
+        query,
+        &vectors,
+        &docs,
+        &tombstones,
+        &bm25,
+        0.0,
+        1.0,
+        k,
+    )
 }
 
 // ---------------------------------------------------------------------------
@@ -204,7 +208,10 @@ fn run_quality_benchmark() {
     println!("## Part 1: Retrieval Quality Before vs. After Consolidation");
     println!();
     println!("Setup:");
-    println!("  Signal records: {} (distinctive keywords, accessed 15x each)", SIGNAL_KEYWORDS.len());
+    println!(
+        "  Signal records: {} (distinctive keywords, accessed 15x each)",
+        SIGNAL_KEYWORDS.len()
+    );
     println!("  Noise records:  990 (generic text, zero accesses)");
     println!("  Total initial:  1000");
     println!("  Working capacity: 100  (triggers eviction of 900 lowest-decay records)");
@@ -261,9 +268,15 @@ fn run_quality_benchmark() {
 
     println!("Consolidation cycle:");
     println!("  Time:       {:.2} ms", consolidation_ms);
-    println!("  Remaining:  {} records (was 1000)", engine.records().len());
+    println!(
+        "  Remaining:  {} records (was 1000)",
+        engine.records().len()
+    );
     println!("  Evictions:  {}", stats.total_evictions);
-    println!("  Promotions: {} (Working→Episodic/Semantic)", stats.total_promotions);
+    println!(
+        "  Promotions: {} (Working→Episodic/Semantic)",
+        stats.total_promotions
+    );
     println!(
         "  Tier dist:  Working={}, Episodic={}, Semantic={}",
         stats.working_count, stats.episodic_count, stats.semantic_count
@@ -290,9 +303,7 @@ fn run_quality_benchmark() {
     );
     println!(
         "  Search speedup: {:.1}x faster ({} records → {} records)",
-        speedup,
-        before.record_count,
-        after.record_count
+        speedup, before.record_count, after.record_count
     );
     println!();
 }
@@ -461,6 +472,8 @@ fn main() {
     println!("     (these tiers are never evicted, guaranteeing durable recall)");
     println!("  3. Reducing search latency proportional to record reduction");
     println!();
-    println!("Cycle time scales sub-linearly: 100 records ~microseconds, 100K records ~tens of ms.");
+    println!(
+        "Cycle time scales sub-linearly: 100 records ~microseconds, 100K records ~tens of ms."
+    );
     println!("Signal records with Correction source + high access_count survive eviction.");
 }

@@ -103,7 +103,11 @@ impl ImportanceScorer {
         if len == 0 {
             return 0.0;
         }
-        let dot: f32 = a[..len].iter().zip(b[..len].iter()).map(|(x, y)| x * y).sum();
+        let dot: f32 = a[..len]
+            .iter()
+            .zip(b[..len].iter())
+            .map(|(x, y)| x * y)
+            .sum();
         let norm_a: f32 = a[..len].iter().map(|x| x * x).sum::<f32>().sqrt();
         let norm_b: f32 = b[..len].iter().map(|x| x * x).sum::<f32>().sqrt();
         if norm_a == 0.0 || norm_b == 0.0 {
@@ -351,9 +355,21 @@ impl ConsolidationEngine {
     /// Return live per-tier counts merged with running totals.
     pub fn get_stats(&self) -> ConsolidationStats {
         let mut stats = self.stats.clone();
-        stats.working_count = self.records.iter().filter(|r| r.tier == MemoryTier::Working).count();
-        stats.episodic_count = self.records.iter().filter(|r| r.tier == MemoryTier::Episodic).count();
-        stats.semantic_count = self.records.iter().filter(|r| r.tier == MemoryTier::Semantic).count();
+        stats.working_count = self
+            .records
+            .iter()
+            .filter(|r| r.tier == MemoryTier::Working)
+            .count();
+        stats.episodic_count = self
+            .records
+            .iter()
+            .filter(|r| r.tier == MemoryTier::Episodic)
+            .count();
+        stats.semantic_count = self
+            .records
+            .iter()
+            .filter(|r| r.tier == MemoryTier::Semantic)
+            .count();
         stats
     }
 
@@ -457,11 +473,16 @@ mod tests {
     // ---------------------------------------------------------------------------
     #[test]
     fn test_importance_scorer_correction() {
-        assert!((ImportanceScorer::score_correction(&MemorySource::Correction) - 1.0_f32).abs() < f32::EPSILON);
+        assert!(
+            (ImportanceScorer::score_correction(&MemorySource::Correction) - 1.0_f32).abs()
+                < f32::EPSILON
+        );
         assert!((ImportanceScorer::score_correction(&MemorySource::User)).abs() < f32::EPSILON);
         assert!((ImportanceScorer::score_correction(&MemorySource::System)).abs() < f32::EPSILON);
         assert!((ImportanceScorer::score_correction(&MemorySource::Tool)).abs() < f32::EPSILON);
-        assert!((ImportanceScorer::score_correction(&MemorySource::Retrieval)).abs() < f32::EPSILON);
+        assert!(
+            (ImportanceScorer::score_correction(&MemorySource::Retrieval)).abs() < f32::EPSILON
+        );
     }
 
     // ---------------------------------------------------------------------------
@@ -471,16 +492,25 @@ mod tests {
     fn test_importance_scorer_length() {
         assert!((ImportanceScorer::score_length("")).abs() < f32::EPSILON);
         // 50 words → 0.5
-        let fifty_words = std::iter::repeat("word").take(50).collect::<Vec<_>>().join(" ");
+        let fifty_words = std::iter::repeat("word")
+            .take(50)
+            .collect::<Vec<_>>()
+            .join(" ");
         let s50 = ImportanceScorer::score_length(&fifty_words);
         assert!((s50 - 0.5).abs() < 1e-5, "expected 0.5, got {s50}");
 
         // 100 words → 1.0
-        let hundred_words = std::iter::repeat("word").take(100).collect::<Vec<_>>().join(" ");
+        let hundred_words = std::iter::repeat("word")
+            .take(100)
+            .collect::<Vec<_>>()
+            .join(" ");
         assert_eq!(ImportanceScorer::score_length(&hundred_words), 1.0);
 
         // 200 words → still 1.0 (clamped)
-        let two_hundred = std::iter::repeat("word").take(200).collect::<Vec<_>>().join(" ");
+        let two_hundred = std::iter::repeat("word")
+            .take(200)
+            .collect::<Vec<_>>()
+            .join(" ");
         assert_eq!(ImportanceScorer::score_length(&two_hundred), 1.0);
     }
 
@@ -495,7 +525,10 @@ mod tests {
             length: 0.2,
         };
         // All 1.0 → should return 1.0
-        assert!((ImportanceScorer::score_combined(1.0, 1.0, 1.0, &weights) - 1.0_f32).abs() < f32::EPSILON);
+        assert!(
+            (ImportanceScorer::score_combined(1.0, 1.0, 1.0, &weights) - 1.0_f32).abs()
+                < f32::EPSILON
+        );
         assert!((ImportanceScorer::score_combined(0.0, 0.0, 0.0, &weights)).abs() < f32::EPSILON);
 
         // Weighted: 0.5*0.5 + 0.0*0.3 + 1.0*0.2 = 0.25 + 0.0 + 0.20 = 0.45, total=1.0 → 0.45
@@ -527,12 +560,21 @@ mod tests {
         // At t=1000 → decay = 1.0 * 1 * exp(-1.0) ≈ 0.3679
         let d1 = DecayCalculator::compute_decay(&rec, 1000.0, lambda);
         let expected = f64::exp(-1.0) as f32;
-        assert!((d1 - expected).abs() < 1e-4, "expected {expected}, got {d1}");
+        assert!(
+            (d1 - expected).abs() < 1e-4,
+            "expected {expected}, got {d1}"
+        );
 
         // Higher access_count boosts the score
-        let rec2 = MemoryRecord { access_count: 9, ..rec.clone() };
+        let rec2 = MemoryRecord {
+            access_count: 9,
+            ..rec.clone()
+        };
         let d2 = DecayCalculator::compute_decay(&rec2, 0.0, lambda);
-        assert!((d2 - 10.0).abs() < 1e-4, "expected 10.0 with access_count=9, got {d2}");
+        assert!(
+            (d2 - 10.0).abs() < 1e-4,
+            "expected 10.0 with access_count=9, got {d2}"
+        );
     }
 
     // ---------------------------------------------------------------------------
@@ -554,7 +596,12 @@ mod tests {
                 i as f64,
             );
             // Force low importance so promotion threshold is not crossed.
-            engine.records.iter_mut().find(|r| r.id == id).unwrap().importance = 0.1;
+            engine
+                .records
+                .iter_mut()
+                .find(|r| r.id == id)
+                .unwrap()
+                .importance = 0.1;
         }
         assert_eq!(engine.records().len(), 5);
 
@@ -585,12 +632,21 @@ mod tests {
             0.0,
         );
         // Force importance above threshold.
-        engine.records.iter_mut().find(|r| r.id == id).unwrap().importance = 0.9;
+        engine
+            .records
+            .iter_mut()
+            .find(|r| r.id == id)
+            .unwrap()
+            .importance = 0.9;
 
         engine.consolidate(0.0);
 
         let rec = engine.get_by_id(id).unwrap();
-        assert_eq!(rec.tier, MemoryTier::Episodic, "record should have been promoted to Episodic");
+        assert_eq!(
+            rec.tier,
+            MemoryTier::Episodic,
+            "record should have been promoted to Episodic"
+        );
         assert!(engine.stats.total_promotions >= 1);
     }
 
@@ -619,7 +675,11 @@ mod tests {
         engine.consolidate(0.0);
 
         let rec = engine.get_by_id(id).unwrap();
-        assert_eq!(rec.tier, MemoryTier::Semantic, "record should have been promoted to Semantic");
+        assert_eq!(
+            rec.tier,
+            MemoryTier::Semantic,
+            "record should have been promoted to Semantic"
+        );
         assert!(engine.stats.total_promotions >= 1);
     }
 
@@ -655,11 +715,21 @@ mod tests {
 
         // 1 Episodic (manually set)
         let id_e = engine.add_memory("e1".to_string(), unit_vec(4, 2), MemorySource::User, 0.0);
-        engine.records.iter_mut().find(|r| r.id == id_e).unwrap().tier = MemoryTier::Episodic;
+        engine
+            .records
+            .iter_mut()
+            .find(|r| r.id == id_e)
+            .unwrap()
+            .tier = MemoryTier::Episodic;
 
         // 1 Semantic (manually set)
         let id_s = engine.add_memory("s1".to_string(), unit_vec(4, 3), MemorySource::User, 0.0);
-        engine.records.iter_mut().find(|r| r.id == id_s).unwrap().tier = MemoryTier::Semantic;
+        engine
+            .records
+            .iter_mut()
+            .find(|r| r.id == id_s)
+            .unwrap()
+            .tier = MemoryTier::Semantic;
 
         let stats = engine.get_stats();
         assert_eq!(stats.working_count, 2);
@@ -699,7 +769,13 @@ mod tests {
             .iter()
             .filter(|r| r.tier == MemoryTier::Episodic)
             .count();
-        assert!(episodic <= 3, "episodic count should be ≤ 3, got {episodic}");
-        assert!(engine.stats.total_evictions >= 2, "expected ≥ 2 episodic evictions");
+        assert!(
+            episodic <= 3,
+            "episodic count should be ≤ 3, got {episodic}"
+        );
+        assert!(
+            engine.stats.total_evictions >= 2,
+            "expected ≥ 2 episodic evictions"
+        );
     }
 }

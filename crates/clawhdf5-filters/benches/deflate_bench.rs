@@ -38,9 +38,7 @@ fn bench_decompress_1mb(c: &mut Criterion) {
     let backend = clawhdf5_filters::deflate_backend();
 
     c.bench_function(&format!("deflate_decompress_1MB ({backend})"), |b| {
-        b.iter(|| {
-            clawhdf5_filters::deflate_decompress(black_box(&compressed), data.len()).unwrap()
-        })
+        b.iter(|| clawhdf5_filters::deflate_decompress(black_box(&compressed), data.len()).unwrap())
     });
 
     c.bench_function("deflate_decompress_1MB (miniz_oxide)", |b| {
@@ -67,9 +65,7 @@ fn bench_decompress_f64(c: &mut Criterion) {
     let backend = clawhdf5_filters::deflate_backend();
 
     c.bench_function(&format!("deflate_decompress_8MB_f64 ({backend})"), |b| {
-        b.iter(|| {
-            clawhdf5_filters::deflate_decompress(black_box(&compressed), data.len()).unwrap()
-        })
+        b.iter(|| clawhdf5_filters::deflate_decompress(black_box(&compressed), data.len()).unwrap())
     });
 
     c.bench_function("deflate_decompress_8MB_f64 (miniz_oxide)", |b| {

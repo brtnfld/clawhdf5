@@ -80,7 +80,10 @@ impl<'a> CacheStoreView<'a> {
 impl MemoryStoreView for CacheStoreView<'_> {
     fn search(&self, embedding: &[f32], k: usize) -> Vec<SearchResult> {
         let scored = vector_search::cosine_similarity_batch_prenorm(
-            embedding, &self.cache.embeddings, &self.cache.norms, &self.cache.tombstones,
+            embedding,
+            &self.cache.embeddings,
+            &self.cache.norms,
+            &self.cache.tombstones,
         );
         vector_search::top_k(scored, k)
             .into_iter()
@@ -109,11 +112,7 @@ impl MemoryStoreView for CacheStoreView<'_> {
 // ---------------------------------------------------------------------------
 
 pub trait MemoryStrategy: Send + Sync {
-    fn evaluate(
-        &self,
-        exchange: &Exchange,
-        store: &dyn MemoryStoreView,
-    ) -> StrategyOutput;
+    fn evaluate(&self, exchange: &Exchange, store: &dyn MemoryStoreView) -> StrategyOutput;
 }
 
 // ---------------------------------------------------------------------------
@@ -139,12 +138,11 @@ fn make_entry(
 /// Average two embeddings element-wise. Returns empty vec if both are None.
 fn average_embeddings(a: &Option<Vec<f32>>, b: &Option<Vec<f32>>) -> Vec<f32> {
     match (a, b) {
-        (Some(va), Some(vb)) => {
-            va.iter()
-                .zip(vb.iter())
-                .map(|(x, y)| (x + y) / 2.0)
-                .collect()
-        }
+        (Some(va), Some(vb)) => va
+            .iter()
+            .zip(vb.iter())
+            .map(|(x, y)| (x + y) / 2.0)
+            .collect(),
         (Some(v), None) | (None, Some(v)) => v.clone(),
         (None, None) => Vec::new(),
     }
@@ -169,11 +167,7 @@ impl Default for SaveEveryExchange {
 }
 
 impl MemoryStrategy for SaveEveryExchange {
-    fn evaluate(
-        &self,
-        exchange: &Exchange,
-        _store: &dyn MemoryStoreView,
-    ) -> StrategyOutput {
+    fn evaluate(&self, exchange: &Exchange, _store: &dyn MemoryStoreView) -> StrategyOutput {
         // Gate check
         if let SaveDecision::Skip(_) = self.gate.should_save(&exchange.user_turn) {
             return StrategyOutput {
@@ -191,11 +185,21 @@ impl MemoryStrategy for SaveEveryExchange {
             }
             SaveAs::UserTurn => {
                 let emb = exchange.user_embedding.clone().unwrap_or_default();
-                vec![make_entry(exchange.user_turn.clone(), emb, "conversation", exchange)]
+                vec![make_entry(
+                    exchange.user_turn.clone(),
+                    emb,
+                    "conversation",
+                    exchange,
+                )]
             }
             SaveAs::AgentTurn => {
                 let emb = exchange.agent_embedding.clone().unwrap_or_default();
-                vec![make_entry(exchange.agent_turn.clone(), emb, "conversation", exchange)]
+                vec![make_entry(
+                    exchange.agent_turn.clone(),
+                    emb,
+                    "conversation",
+                    exchange,
+                )]
             }
             SaveAs::Both => {
                 let u_emb = exchange.user_embedding.clone().unwrap_or_default();
@@ -236,11 +240,7 @@ impl Default for SaveOnSemanticShift {
 }
 
 impl MemoryStrategy for SaveOnSemanticShift {
-    fn evaluate(
-        &self,
-        exchange: &Exchange,
-        store: &dyn MemoryStoreView,
-    ) -> StrategyOutput {
+    fn evaluate(&self, exchange: &Exchange, store: &dyn MemoryStoreView) -> StrategyOutput {
         // Gate check
         if let SaveDecision::Skip(_) = self.gate.should_save(&exchange.user_turn) {
             return StrategyOutput {
@@ -292,8 +292,17 @@ impl MemoryStrategy for SaveOnSemanticShift {
 // ---------------------------------------------------------------------------
 
 const DEFAULT_CORRECTION_CUES: &[&str] = &[
-    "no,", "no ", "actually,", "actually ", "thats wrong", "not quite",
-    "correction:", "to clarify", "i meant", "what i meant", "let me clarify",
+    "no,",
+    "no ",
+    "actually,",
+    "actually ",
+    "thats wrong",
+    "not quite",
+    "correction:",
+    "to clarify",
+    "i meant",
+    "what i meant",
+    "let me clarify",
     "to be clear",
 ];
 
@@ -306,21 +315,21 @@ impl SaveOnUserCorrection {
     pub fn new(base: Box<dyn MemoryStrategy>) -> Self {
         Self {
             base,
-            correction_cues: DEFAULT_CORRECTION_CUES.iter().map(|s| s.to_string()).collect(),
+            correction_cues: DEFAULT_CORRECTION_CUES
+                .iter()
+                .map(|s| s.to_string())
+                .collect(),
         }
     }
 }
 
 impl MemoryStrategy for SaveOnUserCorrection {
-    fn evaluate(
-        &self,
-        exchange: &Exchange,
-        store: &dyn MemoryStoreView,
-    ) -> StrategyOutput {
+    fn evaluate(&self, exchange: &Exchange, store: &dyn MemoryStoreView) -> StrategyOutput {
         let lower = exchange.user_turn.to_lowercase();
-        let is_correction = self.correction_cues.iter().any(|cue| {
-            lower.starts_with(cue) || lower.contains(cue)
-        });
+        let is_correction = self
+            .correction_cues
+            .iter()
+            .any(|cue| lower.starts_with(cue) || lower.contains(cue));
 
         if is_correction {
             // Save unconditionally as a correction — skip gate entirely
@@ -604,7 +613,8 @@ mod tests {
 
         // Non-correction with duplicate embedding → shift catches it
         let non_correction = Exchange {
-            user_turn: "Tell me about the deployment architecture for our microservices".to_string(),
+            user_turn: "Tell me about the deployment architecture for our microservices"
+                .to_string(),
             agent_turn: "The deployment uses Kubernetes".to_string(),
             session_id: "sess-1".to_string(),
             turn_number: 5,
@@ -670,7 +680,9 @@ mod tests {
         let exchange = Exchange {
             user_turn: "Tell me about the deployment architecture for microservices".into(),
             agent_turn: "It uses Kubernetes".into(),
-            session_id: "s1".into(), turn_number: 1, timestamp: 1e6,
+            session_id: "s1".into(),
+            turn_number: 1,
+            timestamp: 1e6,
             user_embedding: Some(vec![1.0, 0.0, 0.0, 0.0]),
             agent_embedding: Some(vec![0.0, 1.0, 0.0, 0.0]),
         };
@@ -688,9 +700,13 @@ mod tests {
         let mut mem = HDF5Memory::create(config).unwrap();
         mem.set_strategy(Box::new(SaveEveryExchange::default()));
         let exchange = Exchange {
-            user_turn: "ok".into(), agent_turn: "Got it!".into(),
-            session_id: "s1".into(), turn_number: 2, timestamp: 1e6,
-            user_embedding: None, agent_embedding: None,
+            user_turn: "ok".into(),
+            agent_turn: "Got it!".into(),
+            session_id: "s1".into(),
+            turn_number: 2,
+            timestamp: 1e6,
+            user_embedding: None,
+            agent_embedding: None,
         };
         let out = mem.record(exchange).unwrap();
         assert!(out.skipped.is_some());

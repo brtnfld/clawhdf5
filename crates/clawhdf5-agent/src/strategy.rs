@@ -189,9 +189,8 @@ pub fn search_with_metrics(
         }
         SearchStrategy::SimdBruteForce => {
             gpu_active = false;
-            let all = vector_search::cosine_similarity_batch_prenorm(
-                query, vectors, norms, tombstones,
-            );
+            let all =
+                vector_search::cosine_similarity_batch_prenorm(query, vectors, norms, tombstones);
             vector_search::top_k(all, k)
         }
         SearchStrategy::Blas => {
@@ -228,9 +227,7 @@ pub fn search_with_metrics(
             gpu_active = false;
             #[cfg(feature = "parallel")]
             {
-                vector_search::parallel_cosine_batch_prenorm(
-                    query, vectors, norms, tombstones, k,
-                )
+                vector_search::parallel_cosine_batch_prenorm(query, vectors, norms, tombstones, k)
             }
             #[cfg(not(feature = "parallel"))]
             {
@@ -267,9 +264,8 @@ pub fn search_with_metrics(
             gpu_active = false;
             // IVF-PQ requires an external index; fall back to prenorm brute force
             // when called through this generic interface.
-            let all = vector_search::cosine_similarity_batch_prenorm(
-                query, vectors, norms, tombstones,
-            );
+            let all =
+                vector_search::cosine_similarity_batch_prenorm(query, vectors, norms, tombstones);
             vector_search::top_k(all, k)
         }
     };
@@ -581,9 +577,8 @@ mod tests {
             None,
         );
 
-        let direct = vector_search::cosine_similarity_batch_prenorm(
-            &query, &vectors, &norms, &tombstones,
-        );
+        let direct =
+            vector_search::cosine_similarity_batch_prenorm(&query, &vectors, &norms, &tombstones);
         let direct_top = vector_search::top_k(direct, 10);
 
         assert_eq!(results.len(), direct_top.len());
@@ -774,9 +769,18 @@ mod tests {
         // Accelerate should be preferred over BLAS/rayon/gpu in the 1K-100K range
         assert_eq!(auto_select_strategy(1_000, &hw), SearchStrategy::Accelerate);
         assert_eq!(auto_select_strategy(5_000, &hw), SearchStrategy::Accelerate);
-        assert_eq!(auto_select_strategy(10_001, &hw), SearchStrategy::Accelerate);
-        assert_eq!(auto_select_strategy(50_000, &hw), SearchStrategy::Accelerate);
-        assert_eq!(auto_select_strategy(100_000, &hw), SearchStrategy::Accelerate);
+        assert_eq!(
+            auto_select_strategy(10_001, &hw),
+            SearchStrategy::Accelerate
+        );
+        assert_eq!(
+            auto_select_strategy(50_000, &hw),
+            SearchStrategy::Accelerate
+        );
+        assert_eq!(
+            auto_select_strategy(100_000, &hw),
+            SearchStrategy::Accelerate
+        );
     }
 
     #[test]

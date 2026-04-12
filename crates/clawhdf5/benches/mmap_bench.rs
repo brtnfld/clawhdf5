@@ -1,8 +1,8 @@
 //! Benchmarks comparing FileReader vs MmapReader and Eager vs Lazy file opening.
 
-use criterion::{Criterion, criterion_group, criterion_main};
 use clawhdf5::{FileBuilder, LazyFile};
 use clawhdf5_io::{FileReader, MemoryReader, MmapReader};
+use criterion::{Criterion, criterion_group, criterion_main};
 
 use std::path::Path;
 

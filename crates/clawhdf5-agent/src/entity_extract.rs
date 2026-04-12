@@ -54,40 +54,135 @@ impl Default for ExtractorConfig {
 
 /// Organization suffixes that indicate a capitalized phrase is an org name.
 const ORG_SUFFIXES: &[&str] = &[
-    "Inc", "Corp", "LLC", "Ltd", "Systems", "Technologies", "Labs",
-    "Solutions", "Group", "Co", "Foundation", "Institute", "Association",
+    "Inc",
+    "Corp",
+    "LLC",
+    "Ltd",
+    "Systems",
+    "Technologies",
+    "Labs",
+    "Solutions",
+    "Group",
+    "Co",
+    "Foundation",
+    "Institute",
+    "Association",
 ];
 
 /// Known location suffixes.
 const LOCATION_SUFFIXES: &[&str] = &[
-    "City", "State", "County", "Province", "Island", "Mountain", "River",
-    "Lake", "Bay", "Valley", "Park", "Street", "Avenue", "Boulevard",
+    "City",
+    "State",
+    "County",
+    "Province",
+    "Island",
+    "Mountain",
+    "River",
+    "Lake",
+    "Bay",
+    "Valley",
+    "Park",
+    "Street",
+    "Avenue",
+    "Boulevard",
 ];
 
 /// Built-in technology word list.
 const TECHNOLOGIES: &[&str] = &[
     // Languages
-    "Rust", "Python", "Go", "JavaScript", "TypeScript", "Java", "Ruby",
-    "Swift", "Kotlin", "Scala", "Haskell", "Erlang", "Elixir", "Clojure",
-    "Lua", "Perl", "PHP", "R", "Julia", "Dart", "Zig",
+    "Rust",
+    "Python",
+    "Go",
+    "JavaScript",
+    "TypeScript",
+    "Java",
+    "Ruby",
+    "Swift",
+    "Kotlin",
+    "Scala",
+    "Haskell",
+    "Erlang",
+    "Elixir",
+    "Clojure",
+    "Lua",
+    "Perl",
+    "PHP",
+    "R",
+    "Julia",
+    "Dart",
+    "Zig",
     // C family
-    "C++", "C#", "C",
+    "C++",
+    "C#",
+    "C",
     // Frameworks
-    "React", "Vue", "Angular", "Svelte", "Next.js", "Nuxt", "Remix",
-    "Django", "Flask", "FastAPI", "Express", "Rails", "Spring", "Laravel",
-    "Actix", "Axum", "Rocket", "Warp",
+    "React",
+    "Vue",
+    "Angular",
+    "Svelte",
+    "Next.js",
+    "Nuxt",
+    "Remix",
+    "Django",
+    "Flask",
+    "FastAPI",
+    "Express",
+    "Rails",
+    "Spring",
+    "Laravel",
+    "Actix",
+    "Axum",
+    "Rocket",
+    "Warp",
     // Databases
-    "Redis", "PostgreSQL", "MySQL", "MongoDB", "SQLite", "DynamoDB",
-    "Cassandra", "Elasticsearch", "Neo4j", "InfluxDB", "CockroachDB",
-    "MariaDB", "Oracle", "MSSQL",
+    "Redis",
+    "PostgreSQL",
+    "MySQL",
+    "MongoDB",
+    "SQLite",
+    "DynamoDB",
+    "Cassandra",
+    "Elasticsearch",
+    "Neo4j",
+    "InfluxDB",
+    "CockroachDB",
+    "MariaDB",
+    "Oracle",
+    "MSSQL",
     // Tools / Platforms
-    "Docker", "Kubernetes", "Git", "AWS", "GCP", "Azure", "Terraform",
-    "Ansible", "Helm", "Grafana", "Prometheus", "Kafka", "RabbitMQ",
-    "Nginx", "Apache", "Linux", "macOS", "Windows",
-    "HDF5", "OpenClaw", "clawhdf5",
+    "Docker",
+    "Kubernetes",
+    "Git",
+    "AWS",
+    "GCP",
+    "Azure",
+    "Terraform",
+    "Ansible",
+    "Helm",
+    "Grafana",
+    "Prometheus",
+    "Kafka",
+    "RabbitMQ",
+    "Nginx",
+    "Apache",
+    "Linux",
+    "macOS",
+    "Windows",
+    "HDF5",
+    "OpenClaw",
+    "clawhdf5",
     // Other
-    "GraphQL", "gRPC", "REST", "WebSocket", "OAuth", "JWT",
-    "WASM", "WebAssembly", "CUDA", "OpenGL", "Vulkan",
+    "GraphQL",
+    "gRPC",
+    "REST",
+    "WebSocket",
+    "OAuth",
+    "JWT",
+    "WASM",
+    "WebAssembly",
+    "CUDA",
+    "OpenGL",
+    "Vulkan",
 ];
 
 /// Common ISO date separators.
@@ -95,18 +190,47 @@ const ISO_SEPS: &[char] = &['-', '/'];
 
 /// Relative date keywords (lower-cased for matching).
 const RELATIVE_DATES: &[&str] = &[
-    "yesterday", "today", "tomorrow",
-    "last week", "next week", "this week",
-    "last month", "next month", "this month",
-    "last year", "next year", "this year",
-    "recently", "soon",
+    "yesterday",
+    "today",
+    "tomorrow",
+    "last week",
+    "next week",
+    "this week",
+    "last month",
+    "next month",
+    "this month",
+    "last year",
+    "next year",
+    "this year",
+    "recently",
+    "soon",
 ];
 
 /// Month names for English date patterns.
 const MONTHS: &[&str] = &[
-    "january", "february", "march", "april", "may", "june",
-    "july", "august", "september", "october", "november", "december",
-    "jan", "feb", "mar", "apr", "jun", "jul", "aug", "sep", "oct", "nov", "dec",
+    "january",
+    "february",
+    "march",
+    "april",
+    "may",
+    "june",
+    "july",
+    "august",
+    "september",
+    "october",
+    "november",
+    "december",
+    "jan",
+    "feb",
+    "mar",
+    "apr",
+    "jun",
+    "jul",
+    "aug",
+    "sep",
+    "oct",
+    "nov",
+    "dec",
 ];
 
 /// Main entity extractor.
@@ -145,9 +269,11 @@ impl EntityExtractor {
 
         // Sort by start offset, then deduplicate overlapping spans (keep higher confidence).
         entities.sort_by(|a, b| {
-            a.start_offset
-                .cmp(&b.start_offset)
-                .then(b.confidence.partial_cmp(&a.confidence).unwrap_or(std::cmp::Ordering::Equal))
+            a.start_offset.cmp(&b.start_offset).then(
+                b.confidence
+                    .partial_cmp(&a.confidence)
+                    .unwrap_or(std::cmp::Ordering::Equal),
+            )
         });
         dedup_overlapping(entities)
     }
@@ -200,15 +326,13 @@ fn extract_technologies(text: &str) -> Vec<ExtractedEntity> {
                 || !text.as_bytes()[abs - 1].is_ascii_alphanumeric()
                     && text.as_bytes()[abs - 1] != b'_';
             let after_ok = end >= text.len()
-                || !text.as_bytes()[end].is_ascii_alphanumeric()
-                    && text.as_bytes()[end] != b'_';
+                || !text.as_bytes()[end].is_ascii_alphanumeric() && text.as_bytes()[end] != b'_';
             if before_ok && after_ok {
                 // Verify there is no hyphen immediately after the tech name
                 // (which would mean it is part of a longer compound identifier
                 // like "clawhdf5-agent"). The full compound will be captured by
                 // the kebab-case project extractor instead.
-                let not_hyphen_after =
-                    end >= text.len() || text.as_bytes()[end] != b'-';
+                let not_hyphen_after = end >= text.len() || text.as_bytes()[end] != b'-';
                 if not_hyphen_after {
                     results.push(ExtractedEntity {
                         text: tech.to_string(),
@@ -289,8 +413,8 @@ fn extract_dates(text: &str) -> Vec<ExtractedEntity> {
             let end_month = abs + month.len();
             // Make sure it's a word boundary
             let before_ok = abs == 0 || !lower.as_bytes()[abs - 1].is_ascii_alphabetic();
-            let after_ok = end_month >= lower.len()
-                || !lower.as_bytes()[end_month].is_ascii_alphabetic();
+            let after_ok =
+                end_month >= lower.len() || !lower.as_bytes()[end_month].is_ascii_alphabetic();
             if before_ok && after_ok {
                 // Try "Month DD" or "Month DD, YYYY"
                 let rest = &text[end_month..];
@@ -350,9 +474,7 @@ fn extract_projects(text: &str) -> Vec<ExtractedEntity> {
         if bytes[i].is_ascii_uppercase() {
             let start = i;
             // Collect the whole identifier (letters, digits, underscore).
-            while i < len
-                && (bytes[i].is_ascii_alphanumeric() || bytes[i] == b'_')
-            {
+            while i < len && (bytes[i].is_ascii_alphanumeric() || bytes[i] == b'_') {
                 i += 1;
             }
             let word = &text[start..i];
@@ -525,16 +647,46 @@ fn word_positions(text: &str) -> Vec<(usize, &str)> {
 }
 
 fn is_capitalized(word: &str) -> bool {
-    word.chars().next().map(|c| c.is_uppercase()).unwrap_or(false)
+    word.chars()
+        .next()
+        .map(|c| c.is_uppercase())
+        .unwrap_or(false)
 }
 
 fn is_stop_word(word: &str) -> bool {
     matches!(
         word,
-        "The" | "A" | "An" | "In" | "On" | "At" | "To" | "For" | "Of"
-            | "And" | "Or" | "But" | "Is" | "Are" | "Was" | "Were"
-            | "It" | "This" | "That" | "These" | "Those" | "He" | "She"
-            | "They" | "We" | "I" | "My" | "His" | "Her" | "Its" | "Our"
+        "The"
+            | "A"
+            | "An"
+            | "In"
+            | "On"
+            | "At"
+            | "To"
+            | "For"
+            | "Of"
+            | "And"
+            | "Or"
+            | "But"
+            | "Is"
+            | "Are"
+            | "Was"
+            | "Were"
+            | "It"
+            | "This"
+            | "That"
+            | "These"
+            | "Those"
+            | "He"
+            | "She"
+            | "They"
+            | "We"
+            | "I"
+            | "My"
+            | "His"
+            | "Her"
+            | "Its"
+            | "Our"
     )
 }
 
@@ -582,7 +734,11 @@ mod tests {
     fn test_tech_rust() {
         let e = default_extractor();
         let entities = e.extract("We use Rust for the backend.");
-        assert!(entities.iter().any(|x| x.text == "Rust" && x.entity_type == ExtractedEntityType::Technology));
+        assert!(
+            entities
+                .iter()
+                .any(|x| x.text == "Rust" && x.entity_type == ExtractedEntityType::Technology)
+        );
     }
 
     #[test]
@@ -604,7 +760,10 @@ mod tests {
     fn test_tech_confidence() {
         let e = default_extractor();
         let entities = e.extract("Using Redis for caching.");
-        let tech = entities.iter().find(|x| x.text == "Redis").expect("Redis not found");
+        let tech = entities
+            .iter()
+            .find(|x| x.text == "Redis")
+            .expect("Redis not found");
         assert!((tech.confidence - 0.9).abs() < 0.01);
     }
 
@@ -622,7 +781,11 @@ mod tests {
         config.extract_technology = false;
         let e = EntityExtractor::new(config);
         let entities = e.extract("We use Rust and Docker.");
-        assert!(!entities.iter().any(|x| x.entity_type == ExtractedEntityType::Technology));
+        assert!(
+            !entities
+                .iter()
+                .any(|x| x.entity_type == ExtractedEntityType::Technology)
+        );
     }
 
     // -----------------------------------------------------------------------
@@ -633,35 +796,53 @@ mod tests {
     fn test_date_iso() {
         let e = default_extractor();
         let entities = e.extract("Deployed on 2024-03-19 at noon.");
-        assert!(entities.iter().any(|x| x.text == "2024-03-19" && x.entity_type == ExtractedEntityType::Date));
+        assert!(
+            entities
+                .iter()
+                .any(|x| x.text == "2024-03-19" && x.entity_type == ExtractedEntityType::Date)
+        );
     }
 
     #[test]
     fn test_date_iso_slash() {
         let e = default_extractor();
         let entities = e.extract("Report date: 2024/03/19.");
-        assert!(entities.iter().any(|x| x.text == "2024/03/19" && x.entity_type == ExtractedEntityType::Date));
+        assert!(
+            entities
+                .iter()
+                .any(|x| x.text == "2024/03/19" && x.entity_type == ExtractedEntityType::Date)
+        );
     }
 
     #[test]
     fn test_date_relative_yesterday() {
         let e = default_extractor();
         let entities = e.extract("I saw it yesterday at the office.");
-        assert!(entities.iter().any(|x| x.text.to_lowercase() == "yesterday" && x.entity_type == ExtractedEntityType::Date));
+        assert!(
+            entities.iter().any(|x| x.text.to_lowercase() == "yesterday"
+                && x.entity_type == ExtractedEntityType::Date)
+        );
     }
 
     #[test]
     fn test_date_relative_last_week() {
         let e = default_extractor();
         let entities = e.extract("We merged the PR last week.");
-        assert!(entities.iter().any(|x| x.text.to_lowercase() == "last week" && x.entity_type == ExtractedEntityType::Date));
+        assert!(
+            entities.iter().any(|x| x.text.to_lowercase() == "last week"
+                && x.entity_type == ExtractedEntityType::Date)
+        );
     }
 
     #[test]
     fn test_date_english_month_day() {
         let e = default_extractor();
         let entities = e.extract("Meeting on March 19 to discuss the roadmap.");
-        assert!(entities.iter().any(|x| x.text.starts_with("March") && x.entity_type == ExtractedEntityType::Date));
+        assert!(
+            entities
+                .iter()
+                .any(|x| x.text.starts_with("March") && x.entity_type == ExtractedEntityType::Date)
+        );
     }
 
     #[test]
@@ -670,14 +851,21 @@ mod tests {
         config.extract_dates = false;
         let e = EntityExtractor::new(config);
         let entities = e.extract("Released on 2024-03-19.");
-        assert!(!entities.iter().any(|x| x.entity_type == ExtractedEntityType::Date));
+        assert!(
+            !entities
+                .iter()
+                .any(|x| x.entity_type == ExtractedEntityType::Date)
+        );
     }
 
     #[test]
     fn test_date_confidence() {
         let e = default_extractor();
         let entities = e.extract("Deadline: 2025-12-31.");
-        let d = entities.iter().find(|x| x.entity_type == ExtractedEntityType::Date).expect("no date");
+        let d = entities
+            .iter()
+            .find(|x| x.entity_type == ExtractedEntityType::Date)
+            .expect("no date");
         assert!(d.confidence >= 0.9);
     }
 
@@ -689,28 +877,44 @@ mod tests {
     fn test_project_camelcase() {
         let e = default_extractor();
         let entities = e.extract("ClawBrainHub is the core component.");
-        assert!(entities.iter().any(|x| x.text == "ClawBrainHub" && x.entity_type == ExtractedEntityType::Project));
+        assert!(
+            entities
+                .iter()
+                .any(|x| x.text == "ClawBrainHub" && x.entity_type == ExtractedEntityType::Project)
+        );
     }
 
     #[test]
     fn test_project_kebab() {
         let e = default_extractor();
         let entities = e.extract("See the clawhdf5-agent crate for details.");
-        assert!(entities.iter().any(|x| x.text == "clawhdf5-agent" && x.entity_type == ExtractedEntityType::Project));
+        assert!(
+            entities.iter().any(
+                |x| x.text == "clawhdf5-agent" && x.entity_type == ExtractedEntityType::Project
+            )
+        );
     }
 
     #[test]
     fn test_project_kebab_multi() {
         let e = default_extractor();
         let entities = e.extract("my-cool-project is production-ready.");
-        assert!(entities.iter().any(|x| x.text == "my-cool-project" && x.entity_type == ExtractedEntityType::Project));
+        assert!(
+            entities
+                .iter()
+                .any(|x| x.text == "my-cool-project"
+                    && x.entity_type == ExtractedEntityType::Project)
+        );
     }
 
     #[test]
     fn test_project_confidence() {
         let e = default_extractor();
         let entities = e.extract("ClawBrainHub handles memory.");
-        let proj = entities.iter().find(|x| x.entity_type == ExtractedEntityType::Project).expect("no project");
+        let proj = entities
+            .iter()
+            .find(|x| x.entity_type == ExtractedEntityType::Project)
+            .expect("no project");
         assert!((proj.confidence - 0.7).abs() < 0.01);
     }
 
@@ -722,14 +926,22 @@ mod tests {
     fn test_capitalized_person() {
         let e = default_extractor();
         let entities = e.extract("I spoke with John Smith about the project.");
-        assert!(entities.iter().any(|x| x.text == "John Smith" && x.entity_type == ExtractedEntityType::Person));
+        assert!(
+            entities
+                .iter()
+                .any(|x| x.text == "John Smith" && x.entity_type == ExtractedEntityType::Person)
+        );
     }
 
     #[test]
     fn test_capitalized_org() {
         let e = default_extractor();
         let entities = e.extract("We partnered with Red Hat Systems for support.");
-        assert!(entities.iter().any(|x| x.entity_type == ExtractedEntityType::Organization));
+        assert!(
+            entities
+                .iter()
+                .any(|x| x.entity_type == ExtractedEntityType::Organization)
+        );
     }
 
     #[test]
@@ -744,8 +956,16 @@ mod tests {
     fn test_all_lowercase_no_cap_entities() {
         let e = default_extractor();
         let entities = e.extract("everything here is lowercase and has no entities.");
-        assert!(!entities.iter().any(|x| x.entity_type == ExtractedEntityType::Person));
-        assert!(!entities.iter().any(|x| x.entity_type == ExtractedEntityType::Organization));
+        assert!(
+            !entities
+                .iter()
+                .any(|x| x.entity_type == ExtractedEntityType::Person)
+        );
+        assert!(
+            !entities
+                .iter()
+                .any(|x| x.entity_type == ExtractedEntityType::Organization)
+        );
     }
 
     // -----------------------------------------------------------------------
@@ -766,8 +986,16 @@ mod tests {
         let e = EntityExtractor::new(config);
         // Only dates (0.95) and techs (0.9) should survive; 0.9 < 0.95 filters techs.
         let entities = e.extract("We use Rust since 2024-01-01.");
-        assert!(!entities.iter().any(|x| x.entity_type == ExtractedEntityType::Technology));
-        assert!(entities.iter().any(|x| x.entity_type == ExtractedEntityType::Date));
+        assert!(
+            !entities
+                .iter()
+                .any(|x| x.entity_type == ExtractedEntityType::Technology)
+        );
+        assert!(
+            entities
+                .iter()
+                .any(|x| x.entity_type == ExtractedEntityType::Date)
+        );
     }
 
     #[test]
@@ -784,17 +1012,33 @@ mod tests {
         let e = default_extractor();
         let texts = ["Deploy with Docker.", "We merged last week."];
         let entities = e.extract_batch(&texts.iter().map(|s| *s).collect::<Vec<_>>());
-        assert!(entities.iter().any(|x| x.entity_type == ExtractedEntityType::Technology));
-        assert!(entities.iter().any(|x| x.entity_type == ExtractedEntityType::Date));
+        assert!(
+            entities
+                .iter()
+                .any(|x| x.entity_type == ExtractedEntityType::Technology)
+        );
+        assert!(
+            entities
+                .iter()
+                .any(|x| x.entity_type == ExtractedEntityType::Date)
+        );
     }
 
     #[test]
     fn test_custom_pattern() {
         let mut config = ExtractorConfig::default();
-        config.custom_patterns.push(("CRITICAL".to_string(), ExtractedEntityType::Custom("Alert".to_string()), 0.99));
+        config.custom_patterns.push((
+            "CRITICAL".to_string(),
+            ExtractedEntityType::Custom("Alert".to_string()),
+            0.99,
+        ));
         let e = EntityExtractor::new(config);
         let entities = e.extract("CRITICAL failure detected.");
-        assert!(entities.iter().any(|x| x.entity_type == ExtractedEntityType::Custom("Alert".to_string())));
+        assert!(
+            entities
+                .iter()
+                .any(|x| x.entity_type == ExtractedEntityType::Custom("Alert".to_string()))
+        );
     }
 
     #[test]
@@ -802,7 +1046,10 @@ mod tests {
         let e = default_extractor();
         let text = "Released 2024-06-15 for testing.";
         let entities = e.extract(text);
-        let d = entities.iter().find(|x| x.entity_type == ExtractedEntityType::Date).expect("no date");
+        let d = entities
+            .iter()
+            .find(|x| x.entity_type == ExtractedEntityType::Date)
+            .expect("no date");
         assert_eq!(&text[d.start_offset..d.end_offset], d.text);
     }
 
@@ -811,6 +1058,10 @@ mod tests {
         let e = default_extractor();
         // "rust" lowercase is NOT in the TECHNOLOGIES list (case-sensitive).
         let entities = e.extract("The rust on the pipes was visible.");
-        assert!(!entities.iter().any(|x| x.text == "rust" && x.entity_type == ExtractedEntityType::Technology));
+        assert!(
+            !entities
+                .iter()
+                .any(|x| x.text == "rust" && x.entity_type == ExtractedEntityType::Technology)
+        );
     }
 }

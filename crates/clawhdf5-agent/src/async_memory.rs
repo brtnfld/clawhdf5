@@ -45,7 +45,7 @@ use std::path::{Path, PathBuf};
 use std::sync::Arc;
 use std::time::Duration;
 
-use tokio::sync::{mpsc, Mutex, oneshot};
+use tokio::sync::{Mutex, mpsc, oneshot};
 use tokio::task::spawn_blocking;
 
 use crate::memory_strategy::{Exchange, StrategyOutput};
@@ -182,10 +182,7 @@ impl AsyncHDF5Memory {
     pub async fn save_batch(&self, entries: Vec<MemoryEntry>) -> Result<Vec<usize>> {
         let (tx, rx) = oneshot::channel();
         self.write_tx
-            .send(WriteCmd::Save {
-                entries,
-                reply: tx,
-            })
+            .send(WriteCmd::Save { entries, reply: tx })
             .await
             .map_err(|_| channel_gone())?;
         rx.await.map_err(|_| channel_gone())?
@@ -240,7 +237,13 @@ impl AsyncHDF5Memory {
         let inner = Arc::clone(&self.inner);
         spawn_blocking(move || {
             let mut mem = inner.blocking_lock();
-            mem.hybrid_search(&query_embedding, &query_text, vector_weight, keyword_weight, k)
+            mem.hybrid_search(
+                &query_embedding,
+                &query_text,
+                vector_weight,
+                keyword_weight,
+                k,
+            )
         })
         .await
         .unwrap_or_default()
@@ -862,9 +865,12 @@ mod tests {
 
         // Save enough entries to cross the threshold
         for i in 0..6 {
-            mem.save(make_entry(&format!("thresh-{i}"), &[i as f32, 0.0, 0.0, 0.0]))
-                .await
-                .unwrap();
+            mem.save(make_entry(
+                &format!("thresh-{i}"),
+                &[i as f32, 0.0, 0.0, 0.0],
+            ))
+            .await
+            .unwrap();
         }
 
         // Give background task a moment to process the threshold flush

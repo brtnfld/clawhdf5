@@ -83,12 +83,8 @@ pub trait MemoryBackend {
     /// * `num_lines` — maximum lines to return.  `None` = all.
     ///
     /// Returns `None` if no record exists for `path`.
-    fn get(
-        &self,
-        path: &str,
-        from_line: Option<usize>,
-        num_lines: Option<usize>,
-    ) -> Option<String>;
+    fn get(&self, path: &str, from_line: Option<usize>, num_lines: Option<usize>)
+    -> Option<String>;
 
     /// Write raw text content at `path`, replacing any existing record.
     fn write(&mut self, path: &str, content: &str) -> Result<(), String>;
@@ -746,13 +742,19 @@ mod tests {
     #[test]
     fn parse_empty_content() {
         let sections = MarkdownParser::parse_memory_md("");
-        assert!(sections.is_empty(), "empty input should produce no sections");
+        assert!(
+            sections.is_empty(),
+            "empty input should produce no sections"
+        );
     }
 
     #[test]
     fn parse_whitespace_only() {
         let sections = MarkdownParser::parse_memory_md("   \n\n  ");
-        assert!(sections.is_empty(), "whitespace-only input should be discarded");
+        assert!(
+            sections.is_empty(),
+            "whitespace-only input should be discarded"
+        );
     }
 
     #[test]
@@ -824,7 +826,8 @@ mod tests {
     #[test]
     fn parse_daily_log_ignores_h1() {
         // H1 should NOT start a new section for daily logs.
-        let content = "# Daily 2024-01-01\n\nIntro.\n\n## Morning\n\nTask 1.\n\n## Evening\n\nReview.";
+        let content =
+            "# Daily 2024-01-01\n\nIntro.\n\n## Morning\n\nTask 1.\n\n## Evening\n\nReview.";
         let sections = MarkdownParser::parse_daily_log(content, "2024-01-01");
         // H1 is treated as plain text; H2s split into sections.
         assert_eq!(sections.len(), 3, "expected preamble + 2 H2 sections");
@@ -906,7 +909,10 @@ mod tests {
             level: 0,
         }];
         let out = MarkdownExporter::export_sections(&sections);
-        assert!(!out.contains('#'), "preamble should not emit a heading line");
+        assert!(
+            !out.contains('#'),
+            "preamble should not emit a heading line"
+        );
         assert!(out.contains("Preamble text."));
     }
 
@@ -1087,9 +1093,15 @@ mod tests {
         backend.ingest_markdown("docs/test.md", md).unwrap();
 
         let exported = backend.export_markdown("docs/test.md").unwrap();
-        assert!(exported.contains("Section One"), "section one missing in export");
+        assert!(
+            exported.contains("Section One"),
+            "section one missing in export"
+        );
         assert!(exported.contains("Content one."), "content one missing");
-        assert!(exported.contains("Section Two"), "section two missing in export");
+        assert!(
+            exported.contains("Section Two"),
+            "section two missing in export"
+        );
         assert!(exported.contains("Content two."), "content two missing");
     }
 
@@ -1168,8 +1180,12 @@ mod tests {
                 max_results: 10,
             });
 
-        backend.write("docs/a.md", "rust programming language").unwrap();
-        backend.write("docs/b.md", "python scripting tools").unwrap();
+        backend
+            .write("docs/a.md", "rust programming language")
+            .unwrap();
+        backend
+            .write("docs/b.md", "python scripting tools")
+            .unwrap();
         backend.write("docs/c.md", "rust async runtime").unwrap();
 
         // Query by text keyword only (empty embedding → zero vector similarity)
@@ -1212,7 +1228,10 @@ mod tests {
         backend.write("a.md", "some content here").unwrap();
 
         let stats = backend.stats();
-        assert!(stats.file_size_bytes > 0, "file size should be > 0 after write");
+        assert!(
+            stats.file_size_bytes > 0,
+            "file size should be > 0 after write"
+        );
     }
 
     #[test]
@@ -1221,13 +1240,18 @@ mod tests {
         let mut backend = make_backend(&dir);
 
         backend.write("user.md", "user specific info").unwrap();
-        backend.write("project.md", "project specific info").unwrap();
+        backend
+            .write("project.md", "project specific info")
+            .unwrap();
 
         let user = backend.get("user.md", None, None).unwrap();
         let project = backend.get("project.md", None, None).unwrap();
 
         assert!(user.contains("user specific"), "wrong content for user.md");
-        assert!(project.contains("project specific"), "wrong content for project.md");
+        assert!(
+            project.contains("project specific"),
+            "wrong content for project.md"
+        );
         assert!(!user.contains("project"), "user.md leaked project content");
     }
 
@@ -1323,7 +1347,10 @@ impl ClawhdfBackend {
     /// Returns `None` if the tier is disabled, the key is absent, or the
     /// entry has expired.
     pub fn ephemeral_get(&mut self, key: &str) -> Option<String> {
-        self.memory.ephemeral_mut()?.get_text(key).map(|s| s.to_string())
+        self.memory
+            .ephemeral_mut()?
+            .get_text(key)
+            .map(|s| s.to_string())
     }
 
     /// Delete a key from ephemeral memory.

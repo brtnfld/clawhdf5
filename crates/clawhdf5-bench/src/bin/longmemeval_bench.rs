@@ -170,8 +170,7 @@ struct EvalResult {
 
 fn evaluate_question(q: &Question, top_k: usize) -> EvalResult {
     let dir = TempDir::new().expect("failed to create temp dir");
-    let mut config =
-        MemoryConfig::new(dir.path().join("lme.h5"), "lme-bench", EMBEDDING_DIM);
+    let mut config = MemoryConfig::new(dir.path().join("lme.h5"), "lme-bench", EMBEDDING_DIM);
     config.wal_enabled = false;
     config.compact_threshold = 0.0;
 
@@ -206,9 +205,7 @@ fn evaluate_question(q: &Question, top_k: usize) -> EvalResult {
         }
     }
 
-    let indices = memory
-        .save_batch(entries)
-        .expect("failed to save entries");
+    let indices = memory.save_batch(entries).expect("failed to save entries");
 
     // Map memory index → has_answer
     let has_answer_indices: HashSet<usize> = indices
@@ -219,8 +216,7 @@ fn evaluate_question(q: &Question, top_k: usize) -> EvalResult {
         .collect();
 
     // Set of session IDs that contain the answer
-    let answer_sess_set: HashSet<&str> =
-        q.answer_session_ids.iter().map(String::as_str).collect();
+    let answer_sess_set: HashSet<&str> = q.answer_session_ids.iter().map(String::as_str).collect();
 
     // Run hybrid search (BM25-only: vector_weight=0.0, keyword_weight=1.0)
     let zero_emb = vec![0.0f32; EMBEDDING_DIM];
@@ -436,8 +432,7 @@ fn main() {
     eprintln!("Loading: {json_path}");
     let data = std::fs::read_to_string(&json_path)
         .unwrap_or_else(|e| panic!("Failed to read {json_path}: {e}"));
-    let questions: Vec<Question> =
-        serde_json::from_str(&data).expect("Failed to parse JSON");
+    let questions: Vec<Question> = serde_json::from_str(&data).expect("Failed to parse JSON");
     let total = questions.len();
     eprintln!("Loaded {total} questions");
 
@@ -453,9 +448,7 @@ fn main() {
 
         let is_abs = q.question_type.ends_with("_abs");
         let base_type = if is_abs {
-            q.question_type
-                .trim_end_matches("_abs")
-                .to_string()
+            q.question_type.trim_end_matches("_abs").to_string()
         } else {
             q.question_type.clone()
         };

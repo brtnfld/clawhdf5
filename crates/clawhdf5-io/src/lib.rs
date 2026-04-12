@@ -7,6 +7,23 @@ use std::io::{self, Read, Seek, SeekFrom, Write};
 
 pub use clawhdf5_format;
 
+// ─────────────────────────────────────────────────────────────────────────────
+// PageInterceptor — hook point for the ClawOnion VFD
+// ─────────────────────────────────────────────────────────────────────────────
+
+/// Intercepts page-level writes before they are committed to storage.
+///
+/// Implement this trait in `clawhdf5-onion` to capture changed pages during
+/// a write session.  Install an interceptor on a [`FileWriter`] via
+/// [`FileWriter::set_interceptor`].
+pub trait PageInterceptor: Send + Sync {
+    /// Called once for each page written.
+    ///
+    /// - `h5_offset`: byte offset of the page within the primary `.h5` file.
+    /// - `page`: raw page bytes (uncompressed, `page_size` bytes).
+    fn on_page_write(&mut self, h5_offset: u64, page: &[u8]);
+}
+
 /// Read-only access to HDF5 data.
 ///
 /// Implementors provide the ability to read the entire file content
@@ -151,10 +168,29 @@ impl HDF5Read for FileReader {
 // ---------------------------------------------------------------------------
 
 /// File-backed writer that writes bytes to a file on disk.
-#[derive(Debug)]
+///
+/// Optionally holds a [`PageInterceptor`] that is called once per page
+/// during [`write_all_bytes`].  When `page_size` is set and an interceptor
+/// is installed, the written bytes are sliced into pages and each page is
+/// forwarded to [`PageInterceptor::on_page_write`].
 pub struct FileWriter {
     path: std::path::PathBuf,
     data: Vec<u8>,
+    /// Optional interceptor for the ClawOnion VFD page-capture hook.
+    interceptor: Option<Box<dyn PageInterceptor>>,
+    /// Page size for slicing writes to the interceptor.  `0` = disabled.
+    page_size: u32,
+}
+
+impl std::fmt::Debug for FileWriter {
+    fn fmt(&self, f: &mut std::fmt::Formatter<'_>) -> std::fmt::Result {
+        f.debug_struct("FileWriter")
+            .field("path", &self.path)
+            .field("data_len", &self.data.len())
+            .field("interceptor", &self.interceptor.is_some())
+            .field("page_size", &self.page_size)
+            .finish()
+    }
 }
 
 impl FileWriter {
@@ -164,7 +200,24 @@ impl FileWriter {
         Ok(Self {
             path,
             data: Vec::new(),
+            interceptor: None,
+            page_size: 0,
         })
+    }
+
+    /// Install a [`PageInterceptor`] and set the page size used to slice writes.
+    ///
+    /// When set, every call to [`write_all_bytes`] will invoke
+    /// [`PageInterceptor::on_page_write`] once for each aligned page.
+    pub fn set_interceptor(&mut self, interceptor: Box<dyn PageInterceptor>, page_size: u32) {
+        self.interceptor = Some(interceptor);
+        self.page_size = page_size;
+    }
+
+    /// Remove and return the interceptor, if any.
+    pub fn take_interceptor(&mut self) -> Option<Box<dyn PageInterceptor>> {
+        self.page_size = 0;
+        self.interceptor.take()
     }
 
     /// Flush the current data to disk.
@@ -189,6 +242,25 @@ impl HDF5Read for FileWriter {
 impl HDF5ReadWrite for FileWriter {
     fn write_all_bytes(&mut self, data: &[u8]) -> io::Result<()> {
         self.data = data.to_vec();
+
+        // Notify interceptor of changed pages (aligned slices).
+        if let Some(ref mut interceptor) = self.interceptor {
+            let ps = self.page_size as usize;
+            if ps > 0 {
+                let mut offset: u64 = 0;
+                let mut pos = 0usize;
+                while pos + ps <= data.len() {
+                    interceptor.on_page_write(offset, &data[pos..pos + ps]);
+                    pos += ps;
+                    offset += ps as u64;
+                }
+                // Partial trailing page
+                if pos < data.len() {
+                    interceptor.on_page_write(offset, &data[pos..]);
+                }
+            }
+        }
+
         self.flush_to_disk()
     }
 }

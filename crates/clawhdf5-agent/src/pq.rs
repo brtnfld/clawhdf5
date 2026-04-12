@@ -35,7 +35,10 @@ impl ProductQuantizer {
         num_centroids: usize,
     ) -> Self {
         assert!(num_centroids <= 256, "num_centroids must be <= 256");
-        assert!(dim.is_multiple_of(num_subvectors), "dim must be divisible by num_subvectors");
+        assert!(
+            dim.is_multiple_of(num_subvectors),
+            "dim must be divisible by num_subvectors"
+        );
         assert!(!vectors.is_empty(), "need at least one vector to train");
 
         let sub_dim = dim / num_subvectors;
@@ -351,11 +354,7 @@ mod tests {
             let codes = pq.encode(v);
             let decoded = pq.decode(&codes);
             assert_eq!(decoded.len(), dim);
-            let error: f32 = v
-                .iter()
-                .zip(&decoded)
-                .map(|(a, b)| (a - b) * (a - b))
-                .sum();
+            let error: f32 = v.iter().zip(&decoded).map(|(a, b)| (a - b) * (a - b)).sum();
             total_error += error;
         }
         let avg_error = total_error / vectors.len() as f32 / dim as f32;
@@ -405,7 +404,10 @@ mod tests {
         assert!(!results.is_empty());
         // The query itself (index 0) should be in top results
         let top_indices: Vec<usize> = results.iter().map(|r| r.0).collect();
-        assert!(top_indices.contains(&0), "query vector should be in top results");
+        assert!(
+            top_indices.contains(&0),
+            "query vector should be in top results"
+        );
     }
 
     #[test]

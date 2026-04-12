@@ -145,13 +145,11 @@ impl EphemeralStore {
             .entries
             .iter()
             .min_by(|a, b| {
-                a.1.access_count
-                    .cmp(&b.1.access_count)
-                    .then_with(|| {
-                        a.1.last_accessed
-                            .partial_cmp(&b.1.last_accessed)
-                            .unwrap_or(std::cmp::Ordering::Equal)
-                    })
+                a.1.access_count.cmp(&b.1.access_count).then_with(|| {
+                    a.1.last_accessed
+                        .partial_cmp(&b.1.last_accessed)
+                        .unwrap_or(std::cmp::Ordering::Equal)
+                })
             })
             .map(|(k, _)| k.clone());
 
@@ -287,7 +285,12 @@ impl EphemeralStore {
         }
 
         // Only count as a hit if the entry has a text field.
-        if self.entries.get(key).and_then(|e| e.text.as_ref()).is_none() {
+        if self
+            .entries
+            .get(key)
+            .and_then(|e| e.text.as_ref())
+            .is_none()
+        {
             self.miss_count += 1;
             return None;
         }
@@ -404,10 +407,7 @@ impl EphemeralStore {
     /// token (case-insensitive).  Returns up to `k` results sorted by score
     /// descending.  Expired entries are lazily removed during iteration.
     pub fn search_text(&mut self, query: &str, k: usize) -> Vec<(String, f32)> {
-        let tokens: Vec<String> = query
-            .split_whitespace()
-            .map(|t| t.to_lowercase())
-            .collect();
+        let tokens: Vec<String> = query.split_whitespace().map(|t| t.to_lowercase()).collect();
 
         if tokens.is_empty() || k == 0 {
             return Vec::new();
@@ -429,10 +429,7 @@ impl EphemeralStore {
                 Some(t) => t.to_lowercase(),
                 None => continue,
             };
-            let score: f32 = tokens
-                .iter()
-                .filter(|t| text.contains(t.as_str()))
-                .count() as f32;
+            let score: f32 = tokens.iter().filter(|t| text.contains(t.as_str())).count() as f32;
             if score > 0.0 {
                 scored.push((key.clone(), score));
             }

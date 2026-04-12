@@ -315,9 +315,8 @@ fn roundtrip_through_file_writer() {
     let mut ds_addr = None;
     for msg in &oh.messages {
         if msg.msg_type == clawhdf5_format::message_type::MessageType::Link {
-            let link =
-                clawhdf5_format::link_message::LinkMessage::parse(&msg.data, sb.offset_size)
-                    .unwrap();
+            let link = clawhdf5_format::link_message::LinkMessage::parse(&msg.data, sb.offset_size)
+                .unwrap();
             if link.name == "compound_ds" {
                 if let clawhdf5_format::link_message::LinkTarget::Hard {
                     object_header_address,
@@ -345,8 +344,7 @@ fn roundtrip_through_file_writer() {
     for msg in &ds_oh.messages {
         match msg.msg_type {
             clawhdf5_format::message_type::MessageType::Datatype => {
-                let (parsed_dt, _) =
-                    clawhdf5_format::datatype::Datatype::parse(&msg.data).unwrap();
+                let (parsed_dt, _) = clawhdf5_format::datatype::Datatype::parse(&msg.data).unwrap();
                 found_dt = Some(parsed_dt);
             }
             clawhdf5_format::message_type::MessageType::Dataspace => {

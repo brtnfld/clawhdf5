@@ -19,22 +19,25 @@ pub unsafe fn dot_product(a: &[f32], b: &[f32]) -> f32 {
 
     // Process 8 elements per iteration (2x4 unrolled)
     while i + 8 <= len {
-        let va0 = vld1q_f32(a.as_ptr().add(i));
-        let vb0 = vld1q_f32(b.as_ptr().add(i));
-        acc0 = vfmaq_f32(acc0, va0, vb0);
+        unsafe {
+            let va0 = vld1q_f32(a.as_ptr().add(i));
+            let vb0 = vld1q_f32(b.as_ptr().add(i));
+            acc0 = vfmaq_f32(acc0, va0, vb0);
 
-        let va1 = vld1q_f32(a.as_ptr().add(i + 4));
-        let vb1 = vld1q_f32(b.as_ptr().add(i + 4));
-        acc1 = vfmaq_f32(acc1, va1, vb1);
-
+            let va1 = vld1q_f32(a.as_ptr().add(i + 4));
+            let vb1 = vld1q_f32(b.as_ptr().add(i + 4));
+            acc1 = vfmaq_f32(acc1, va1, vb1);
+        }
         i += 8;
     }
 
     // Process remaining 4-element chunk
     if i + 4 <= len {
-        let va = vld1q_f32(a.as_ptr().add(i));
-        let vb = vld1q_f32(b.as_ptr().add(i));
-        acc0 = vfmaq_f32(acc0, va, vb);
+        unsafe {
+            let va = vld1q_f32(a.as_ptr().add(i));
+            let vb = vld1q_f32(b.as_ptr().add(i));
+            acc0 = vfmaq_f32(acc0, va, vb);
+        }
         i += 4;
     }
 
@@ -64,11 +67,13 @@ pub unsafe fn cosine_similarity(a: &[f32], b: &[f32]) -> f32 {
     let mut norm_b_acc = vdupq_n_f32(0.0);
 
     while i + 4 <= len {
-        let va = vld1q_f32(a.as_ptr().add(i));
-        let vb = vld1q_f32(b.as_ptr().add(i));
-        dot_acc = vfmaq_f32(dot_acc, va, vb);
-        norm_a_acc = vfmaq_f32(norm_a_acc, va, va);
-        norm_b_acc = vfmaq_f32(norm_b_acc, vb, vb);
+        unsafe {
+            let va = vld1q_f32(a.as_ptr().add(i));
+            let vb = vld1q_f32(b.as_ptr().add(i));
+            dot_acc = vfmaq_f32(dot_acc, va, vb);
+            norm_a_acc = vfmaq_f32(norm_a_acc, va, va);
+            norm_b_acc = vfmaq_f32(norm_b_acc, vb, vb);
+        }
         i += 4;
     }
 
@@ -99,10 +104,12 @@ pub unsafe fn l2_distance(a: &[f32], b: &[f32]) -> f32 {
     let mut acc = vdupq_n_f32(0.0);
 
     while i + 4 <= len {
-        let va = vld1q_f32(a.as_ptr().add(i));
-        let vb = vld1q_f32(b.as_ptr().add(i));
-        let diff = vsubq_f32(va, vb);
-        acc = vfmaq_f32(acc, diff, diff);
+        unsafe {
+            let va = vld1q_f32(a.as_ptr().add(i));
+            let vb = vld1q_f32(b.as_ptr().add(i));
+            let diff = vsubq_f32(va, vb);
+            acc = vfmaq_f32(acc, diff, diff);
+        }
         i += 4;
     }
 

@@ -49,20 +49,20 @@ pub fn blas_cosine_batch(
 
     unsafe {
         matrixmultiply::sgemm(
-            active_n,   // m: rows of A (and C)
-            dim,        // k: cols of A / rows of B
-            1,          // n: cols of B (and C)
-            1.0,        // alpha
+            active_n, // m: rows of A (and C)
+            dim,      // k: cols of A / rows of B
+            1,        // n: cols of B (and C)
+            1.0,      // alpha
             flat.as_ptr(),
-            dim as isize,  // rsa: row stride of A (row-major: dim)
-            1,             // csa: col stride of A (row-major: 1)
+            dim as isize, // rsa: row stride of A (row-major: dim)
+            1,            // csa: col stride of A (row-major: 1)
             query.as_ptr(),
-            1,  // rsb: row stride of B (column vector: 1)
-            1,  // csb: col stride of B (single column: doesn't matter, use 1)
+            1,   // rsb: row stride of B (column vector: 1)
+            1,   // csb: col stride of B (single column: doesn't matter, use 1)
             0.0, // beta
             scores.as_mut_ptr(),
-            1,  // rsc: row stride of C
-            1,  // csc: col stride of C
+            1, // rsc: row stride of C
+            1, // csc: col stride of C
         );
     }
 
@@ -214,11 +214,7 @@ pub fn blas_batch_norms(vectors_flat: &[f32], dim: usize) -> Vec<f32> {
 ///
 /// For cosine distance, divide by norms afterward.
 /// For PQ training, this computes all pairwise distances efficiently.
-pub fn blas_distance_matrix(
-    queries: &[f32],
-    vectors: &[f32],
-    dim: usize,
-) -> Vec<f32> {
+pub fn blas_distance_matrix(queries: &[f32], vectors: &[f32], dim: usize) -> Vec<f32> {
     if dim == 0 || queries.is_empty() || vectors.is_empty() {
         return Vec::new();
     }
@@ -234,20 +230,20 @@ pub fn blas_distance_matrix(
     //   row stride = 1, col stride = dim
     unsafe {
         matrixmultiply::sgemm(
-            q,              // m: rows of result
-            dim,            // k: inner dimension
-            n,              // n: cols of result
-            1.0,            // alpha
+            q,   // m: rows of result
+            dim, // k: inner dimension
+            n,   // n: cols of result
+            1.0, // alpha
             queries.as_ptr(),
-            dim as isize,   // rsa: row stride of queries (row-major)
-            1,              // csa: col stride of queries
+            dim as isize, // rsa: row stride of queries (row-major)
+            1,            // csa: col stride of queries
             vectors.as_ptr(),
-            1,              // rsb: row stride of vectors^T = col stride of vectors = 1
-            dim as isize,   // csb: col stride of vectors^T = row stride of vectors = dim
-            0.0,            // beta
+            1,            // rsb: row stride of vectors^T = col stride of vectors = 1
+            dim as isize, // csb: col stride of vectors^T = row stride of vectors = dim
+            0.0,          // beta
             result.as_mut_ptr(),
-            n as isize,     // rsc: row stride of result (row-major)
-            1,              // csc: col stride of result
+            n as isize, // rsc: row stride of result (row-major)
+            1,          // csc: col stride of result
         );
     }
 
@@ -286,7 +282,10 @@ mod tests {
 
         let blas_results = blas_cosine_batch(&query, &vectors, &norms, &tombstones, n);
         let simd_results = crate::vector_search::cosine_similarity_batch_prenorm(
-            &query, &vectors, &norms, &tombstones,
+            &query,
+            &vectors,
+            &norms,
+            &tombstones,
         );
 
         assert_eq!(blas_results.len(), simd_results.len());
@@ -315,7 +314,10 @@ mod tests {
 
         let blas_top10 = blas_cosine_batch(&query, &vectors, &norms, &tombstones, 10);
         let simd_all = crate::vector_search::cosine_similarity_batch_prenorm(
-            &query, &vectors, &norms, &tombstones,
+            &query,
+            &vectors,
+            &norms,
+            &tombstones,
         );
         let simd_top10 = crate::vector_search::top_k(simd_all, 10);
 
@@ -484,8 +486,7 @@ mod tests {
         let flat: Vec<f32> = vectors.iter().flat_map(|v| v.iter().copied()).collect();
 
         let vec_results = blas_cosine_batch(&query, &vectors, &norms, &tombstones, 10);
-        let flat_results =
-            blas_cosine_batch_flat(&query, &flat, &norms, &tombstones, dim, 10);
+        let flat_results = blas_cosine_batch_flat(&query, &flat, &norms, &tombstones, dim, 10);
 
         assert_eq!(vec_results.len(), flat_results.len());
         for (v, f) in vec_results.iter().zip(&flat_results) {
@@ -546,7 +547,10 @@ mod tests {
 
         let blas_top20 = blas_cosine_batch(&query, &vectors, &norms, &tombstones, 20);
         let simd_all = crate::vector_search::cosine_similarity_batch_prenorm(
-            &query, &vectors, &norms, &tombstones,
+            &query,
+            &vectors,
+            &norms,
+            &tombstones,
         );
         let simd_top20 = crate::vector_search::top_k(simd_all, 20);
 

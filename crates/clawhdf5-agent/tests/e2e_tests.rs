@@ -1,9 +1,9 @@
-use std::path::Path;
-use tempfile::TempDir;
 use clawhdf5_agent::bm25::BM25Index;
 use clawhdf5_agent::hybrid::hybrid_search;
 use clawhdf5_agent::vector_search;
 use clawhdf5_agent::{AgentMemory, HDF5Memory, MemoryConfig, MemoryEntry};
+use std::path::Path;
+use tempfile::TempDir;
 
 // ---------------------------------------------------------------------------
 // Helpers
@@ -426,7 +426,14 @@ fn test_snapshot_and_continue() {
 
     // Save initial data
     let entries: Vec<MemoryEntry> = (0..50)
-        .map(|i| make_entry(&format!("initial_{i}"), vec![i as f32, 0.0, 0.0, 0.0], "ch1", "s1"))
+        .map(|i| {
+            make_entry(
+                &format!("initial_{i}"),
+                vec![i as f32, 0.0, 0.0, 0.0],
+                "ch1",
+                "s1",
+            )
+        })
         .collect();
     mem.save_batch(entries).unwrap();
 
@@ -436,7 +443,14 @@ fn test_snapshot_and_continue() {
 
     // Continue working on original
     let more: Vec<MemoryEntry> = (50..100)
-        .map(|i| make_entry(&format!("after_snap_{i}"), vec![i as f32, 0.0, 0.0, 0.0], "ch1", "s2"))
+        .map(|i| {
+            make_entry(
+                &format!("after_snap_{i}"),
+                vec![i as f32, 0.0, 0.0, 0.0],
+                "ch1",
+                "s2",
+            )
+        })
         .collect();
     mem.save_batch(more).unwrap();
     assert_eq!(mem.count(), 100);
@@ -490,12 +504,27 @@ fn test_search_after_compaction() {
     let mut mem = HDF5Memory::create(config).unwrap();
 
     // Save entries with distinct embeddings
-    mem.save(make_entry("target entry", vec![1.0, 0.0, 0.0, 0.0], "ch", "s"))
-        .unwrap();
-    mem.save(make_entry("will delete this", vec![0.0, 1.0, 0.0, 0.0], "ch", "s"))
-        .unwrap();
-    mem.save(make_entry("another keeper", vec![0.5, 0.5, 0.0, 0.0], "ch", "s"))
-        .unwrap();
+    mem.save(make_entry(
+        "target entry",
+        vec![1.0, 0.0, 0.0, 0.0],
+        "ch",
+        "s",
+    ))
+    .unwrap();
+    mem.save(make_entry(
+        "will delete this",
+        vec![0.0, 1.0, 0.0, 0.0],
+        "ch",
+        "s",
+    ))
+    .unwrap();
+    mem.save(make_entry(
+        "another keeper",
+        vec![0.5, 0.5, 0.0, 0.0],
+        "ch",
+        "s",
+    ))
+    .unwrap();
 
     // Delete middle entry
     mem.delete(1).unwrap();
@@ -586,8 +615,11 @@ fn test_empty_operations_pipeline() {
 
     // Empty search
     let (_, cache, _, _) = read_cache(&path);
-    let results =
-        vector_search::cosine_similarity_batch(&[1.0, 0.0, 0.0, 0.0], &cache.embeddings, &cache.tombstones);
+    let results = vector_search::cosine_similarity_batch(
+        &[1.0, 0.0, 0.0, 0.0],
+        &cache.embeddings,
+        &cache.tombstones,
+    );
     assert!(results.is_empty());
 
     let bm25 = BM25Index::build(&cache.chunks, &cache.tombstones);
@@ -749,10 +781,20 @@ fn test_knowledge_graph_with_embeddings() {
 
     // Save some entries
     let idx0 = mem
-        .save(make_entry("Rust language", vec![1.0, 0.0, 0.0, 0.0], "ch", "s"))
+        .save(make_entry(
+            "Rust language",
+            vec![1.0, 0.0, 0.0, 0.0],
+            "ch",
+            "s",
+        ))
         .unwrap();
     let idx1 = mem
-        .save(make_entry("Python language", vec![0.0, 1.0, 0.0, 0.0], "ch", "s"))
+        .save(make_entry(
+            "Python language",
+            vec![0.0, 1.0, 0.0, 0.0],
+            "ch",
+            "s",
+        ))
         .unwrap();
 
     // Add entities linked to embeddings
@@ -837,10 +879,7 @@ fn test_full_pipeline_snapshot_restore() {
     assert_eq!(results.len(), 150);
 
     // Verify sessions on snapshot
-    let summary = snap_mem
-        .get_session_summary("sess_5")
-        .unwrap()
-        .unwrap();
+    let summary = snap_mem.get_session_summary("sess_5").unwrap().unwrap();
     assert_eq!(summary, "Session 5");
 }
 
@@ -873,7 +912,14 @@ fn test_overwrite_and_reopen() {
         let config = MemoryConfig::new(path.clone(), "agent-v2", 4);
         let mut mem = HDF5Memory::create(config).unwrap();
         let entries: Vec<MemoryEntry> = (0..10)
-            .map(|i| make_entry(&format!("v2_{i}"), vec![i as f32, 0.0, 0.0, 0.0], "ch2", "s2"))
+            .map(|i| {
+                make_entry(
+                    &format!("v2_{i}"),
+                    vec![i as f32, 0.0, 0.0, 0.0],
+                    "ch2",
+                    "s2",
+                )
+            })
             .collect();
         mem.save_batch(entries).unwrap();
         mem.flush_wal().unwrap();
@@ -975,7 +1021,10 @@ fn test_gpu_fallback_to_cpu_when_unavailable() {
     let vectors: Vec<Vec<f32>> = (0..n)
         .map(|_| (0..dim).map(|_| rng.next_f32()).collect())
         .collect();
-    let norms: Vec<f32> = vectors.iter().map(|v| clawhdf5_accel::vector_norm(v)).collect();
+    let norms: Vec<f32> = vectors
+        .iter()
+        .map(|v| clawhdf5_accel::vector_norm(v))
+        .collect();
     let tombstones = vec![0u8; n];
 
     let gpu = clawhdf5_agent::gpu_search::GpuSearchBackend::try_init(&vectors, &norms, dim, 50);
@@ -991,12 +1040,11 @@ fn test_gpu_fallback_to_cpu_when_unavailable() {
 
 #[test]
 fn test_gpu_l2_fallback_works() {
-    let vectors = vec![
-        vec![0.0, 0.0],
-        vec![1.0, 0.0],
-        vec![10.0, 10.0],
-    ];
-    let norms: Vec<f32> = vectors.iter().map(|v| clawhdf5_accel::vector_norm(v)).collect();
+    let vectors = vec![vec![0.0, 0.0], vec![1.0, 0.0], vec![10.0, 10.0]];
+    let norms: Vec<f32> = vectors
+        .iter()
+        .map(|v| clawhdf5_accel::vector_norm(v))
+        .collect();
     let tombstones = vec![0u8; 3];
 
     let gpu = clawhdf5_agent::gpu_search::GpuSearchBackend::try_init(&vectors, &norms, 2, 1);
@@ -1015,8 +1063,13 @@ fn test_mmap_reader_opens_and_reads() {
 
     {
         let mut mem = HDF5Memory::create(config).unwrap();
-        mem.save(make_entry("mmap content", vec![1.0, 2.0, 3.0, 4.0], "ch", "s"))
-            .unwrap();
+        mem.save(make_entry(
+            "mmap content",
+            vec![1.0, 2.0, 3.0, 4.0],
+            "ch",
+            "s",
+        ))
+        .unwrap();
     }
 
     // Verify we can open via mmap (storage::read_from_disk now uses MmapReader)
@@ -1084,7 +1137,10 @@ fn test_strategy_reports_backend() {
     let vectors: Vec<Vec<f32>> = (0..n)
         .map(|_| (0..dim).map(|_| rng.next_f32()).collect())
         .collect();
-    let norms: Vec<f32> = vectors.iter().map(|v| clawhdf5_accel::vector_norm(v)).collect();
+    let norms: Vec<f32> = vectors
+        .iter()
+        .map(|v| clawhdf5_accel::vector_norm(v))
+        .collect();
     let tombstones = vec![0u8; n];
     let query = vectors[0].clone();
 

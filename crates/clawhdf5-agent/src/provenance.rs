@@ -282,9 +282,30 @@ mod tests {
     #[test]
     fn store_get_by_source() {
         let mut store = ProvenanceStore::new();
-        store.add(MemoryProvenance::new(1, MemorySource::User, "u", ts(), "a", "s1"));
-        store.add(MemoryProvenance::new(2, MemorySource::User, "u", ts(), "b", "s1"));
-        store.add(MemoryProvenance::new(3, MemorySource::System, "s", ts(), "c", "s1"));
+        store.add(MemoryProvenance::new(
+            1,
+            MemorySource::User,
+            "u",
+            ts(),
+            "a",
+            "s1",
+        ));
+        store.add(MemoryProvenance::new(
+            2,
+            MemorySource::User,
+            "u",
+            ts(),
+            "b",
+            "s1",
+        ));
+        store.add(MemoryProvenance::new(
+            3,
+            MemorySource::System,
+            "s",
+            ts(),
+            "c",
+            "s1",
+        ));
         let user_records = store.get_by_source(MemorySource::User);
         assert_eq!(user_records.len(), 2);
         let sys_records = store.get_by_source(MemorySource::System);
@@ -296,14 +317,28 @@ mod tests {
     #[test]
     fn verify_integrity_intact() {
         let mut store = ProvenanceStore::new();
-        store.add(MemoryProvenance::new(1, MemorySource::Tool, "t", ts(), "original text", "s1"));
+        store.add(MemoryProvenance::new(
+            1,
+            MemorySource::Tool,
+            "t",
+            ts(),
+            "original text",
+            "s1",
+        ));
         assert!(store.verify_integrity(1, "original text"));
     }
 
     #[test]
     fn verify_integrity_tampered() {
         let mut store = ProvenanceStore::new();
-        store.add(MemoryProvenance::new(1, MemorySource::Tool, "t", ts(), "original", "s1"));
+        store.add(MemoryProvenance::new(
+            1,
+            MemorySource::Tool,
+            "t",
+            ts(),
+            "original",
+            "s1",
+        ));
         assert!(!store.verify_integrity(1, "tampered"));
     }
 
@@ -316,7 +351,14 @@ mod tests {
     #[test]
     fn mark_verified() {
         let mut store = ProvenanceStore::new();
-        store.add(MemoryProvenance::new(1, MemorySource::Correction, "c", ts(), "x", "s1"));
+        store.add(MemoryProvenance::new(
+            1,
+            MemorySource::Correction,
+            "c",
+            ts(),
+            "x",
+            "s1",
+        ));
         assert_eq!(store.get_unverified().len(), 1);
         store.mark_verified(1);
         assert_eq!(store.get_unverified().len(), 0);
@@ -332,8 +374,22 @@ mod tests {
     #[test]
     fn get_unverified_mixed() {
         let mut store = ProvenanceStore::new();
-        store.add(MemoryProvenance::new(1, MemorySource::User, "u", ts(), "a", "s1"));
-        store.add(MemoryProvenance::new(2, MemorySource::User, "u", ts(), "b", "s1"));
+        store.add(MemoryProvenance::new(
+            1,
+            MemorySource::User,
+            "u",
+            ts(),
+            "a",
+            "s1",
+        ));
+        store.add(MemoryProvenance::new(
+            2,
+            MemorySource::User,
+            "u",
+            ts(),
+            "b",
+            "s1",
+        ));
         store.mark_verified(1);
         let unverified = store.get_unverified();
         assert_eq!(unverified.len(), 1);
@@ -344,7 +400,14 @@ mod tests {
     fn store_len_and_is_empty() {
         let mut store = ProvenanceStore::new();
         assert!(store.is_empty());
-        store.add(MemoryProvenance::new(1, MemorySource::User, "u", ts(), "a", "s1"));
+        store.add(MemoryProvenance::new(
+            1,
+            MemorySource::User,
+            "u",
+            ts(),
+            "a",
+            "s1",
+        ));
         assert_eq!(store.len(), 1);
         assert!(!store.is_empty());
     }

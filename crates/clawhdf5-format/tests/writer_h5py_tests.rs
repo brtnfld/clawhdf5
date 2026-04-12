@@ -537,9 +537,7 @@ fn read_h5py_generated_ea_file() {
                 .messages
                 .iter()
                 .find(|m| m.msg_type == clawhdf5_format::message_type::MessageType::FilterPipeline)
-                .map(|m| {
-                    clawhdf5_format::filter_pipeline::FilterPipeline::parse(&m.data).unwrap()
-                });
+                .map(|m| clawhdf5_format::filter_pipeline::FilterPipeline::parse(&m.data).unwrap());
             clawhdf5_format::chunked_read::read_chunked_data(
                 &bytes,
                 &dl,

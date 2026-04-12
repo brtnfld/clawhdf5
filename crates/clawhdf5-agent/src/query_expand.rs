@@ -121,7 +121,7 @@ const MORPH_RULES: &[(&str, &[&str])] = &[
     ("tion", &["te"]),    // creation -> create
     ("ations", &["ate"]), // operations -> operate
     ("ies", &["y", "ied"]),
-    ("s", &[""]),         // runs -> run (applied last, short suffix)
+    ("s", &[""]), // runs -> run (applied last, short suffix)
 ];
 
 // ---------------------------------------------------------------------------
@@ -160,7 +160,11 @@ impl QueryExpander {
         dedup_by_text(&mut results);
 
         // Sort by weight descending.
-        results.sort_by(|a, b| b.weight.partial_cmp(&a.weight).unwrap_or(std::cmp::Ordering::Equal));
+        results.sort_by(|a, b| {
+            b.weight
+                .partial_cmp(&a.weight)
+                .unwrap_or(std::cmp::Ordering::Equal)
+        });
         results.truncate(self.config.max_expansions);
         results
     }
@@ -206,7 +210,11 @@ impl QueryExpander {
         // Filter identical to original and dedup.
         results.retain(|e| !e.text.eq_ignore_ascii_case(query));
         dedup_by_text(&mut results);
-        results.sort_by(|a, b| b.weight.partial_cmp(&a.weight).unwrap_or(std::cmp::Ordering::Equal));
+        results.sort_by(|a, b| {
+            b.weight
+                .partial_cmp(&a.weight)
+                .unwrap_or(std::cmp::Ordering::Equal)
+        });
         results.truncate(self.config.max_expansions);
         results
     }
@@ -383,9 +391,9 @@ mod tests {
         let expanded = e.expand("how to search for documents");
         let texts: Vec<&str> = expanded.iter().map(|x| x.text.as_str()).collect();
         // Should produce at least one synonym variant.
-        let has_variant = texts.iter().any(|t| {
-            t.contains("find") || t.contains("retrieve") || t.contains("query")
-        });
+        let has_variant = texts
+            .iter()
+            .any(|t| t.contains("find") || t.contains("retrieve") || t.contains("query"));
         assert!(has_variant, "expected synonym variants, got: {:?}", texts);
     }
 
@@ -393,14 +401,21 @@ mod tests {
     fn test_synonym_create() {
         let e = default_expander();
         let expanded = e.expand("create a new entity");
-        assert!(expanded.iter().any(|x| x.text.contains("build") || x.text.contains("make")));
+        assert!(
+            expanded
+                .iter()
+                .any(|x| x.text.contains("build") || x.text.contains("make"))
+        );
     }
 
     #[test]
     fn test_synonym_weight() {
         let e = default_expander();
         let expanded = e.expand("find the document");
-        let syn = expanded.iter().find(|x| x.expansion_type == "synonym").expect("no synonym");
+        let syn = expanded
+            .iter()
+            .find(|x| x.expansion_type == "synonym")
+            .expect("no synonym");
         assert!((syn.weight - 0.7).abs() < 0.01);
     }
 
@@ -412,7 +427,11 @@ mod tests {
     fn test_acronym_expand_api() {
         let e = default_expander();
         let expanded = e.expand("call the API endpoint");
-        assert!(expanded.iter().any(|x| x.text.contains("Application Programming Interface")));
+        assert!(
+            expanded
+                .iter()
+                .any(|x| x.text.contains("Application Programming Interface"))
+        );
     }
 
     #[test]
@@ -426,7 +445,11 @@ mod tests {
     fn test_acronym_expand_llm() {
         let e = default_expander();
         let expanded = e.expand("LLM inference speed");
-        assert!(expanded.iter().any(|x| x.text.contains("Large Language Model")));
+        assert!(
+            expanded
+                .iter()
+                .any(|x| x.text.contains("Large Language Model"))
+        );
     }
 
     #[test]
@@ -481,7 +504,10 @@ mod tests {
         let e = default_expander();
         let expanded = e.expand("running the tests");
         // Should produce "runn" + "ed" -> "runned" or similar morph variant.
-        let morph: Vec<&ExpandedQuery> = expanded.iter().filter(|x| x.expansion_type == "morphological").collect();
+        let morph: Vec<&ExpandedQuery> = expanded
+            .iter()
+            .filter(|x| x.expansion_type == "morphological")
+            .collect();
         assert!(!morph.is_empty(), "expected morphological variants");
     }
 
@@ -489,7 +515,9 @@ mod tests {
     fn test_morph_weight() {
         let e = default_expander();
         let expanded = e.expand("searching documents");
-        let m = expanded.iter().find(|x| x.expansion_type == "morphological");
+        let m = expanded
+            .iter()
+            .find(|x| x.expansion_type == "morphological");
         if let Some(m) = m {
             assert!((m.weight - 0.5).abs() < 0.01);
         }
@@ -586,8 +614,11 @@ mod tests {
         let expanded = e.expand_with_knowledge("query the pg database", &knowledge);
         // Should contain a variant with "postgresql".
         assert!(
-            expanded.iter().any(|x| x.text.to_lowercase().contains("postgresql")),
-            "expected alias expansion, got: {:?}", expanded.iter().map(|x| &x.text).collect::<Vec<_>>()
+            expanded
+                .iter()
+                .any(|x| x.text.to_lowercase().contains("postgresql")),
+            "expected alias expansion, got: {:?}",
+            expanded.iter().map(|x| &x.text).collect::<Vec<_>>()
         );
     }
 
@@ -602,7 +633,8 @@ mod tests {
         // Should produce a variant mentioning Redis (the neighbor).
         assert!(
             expanded.iter().any(|x| x.text.contains("Redis")),
-            "expected neighbor expansion, got: {:?}", expanded.iter().map(|x| &x.text).collect::<Vec<_>>()
+            "expected neighbor expansion, got: {:?}",
+            expanded.iter().map(|x| &x.text).collect::<Vec<_>>()
         );
     }
 }

@@ -1,5 +1,3 @@
-use criterion::{criterion_group, criterion_main, BenchmarkId, Criterion};
-use tempfile::TempDir;
 use clawhdf5_agent::bm25::BM25Index;
 use clawhdf5_agent::consolidation::{
     ConsolidationConfig, ConsolidationEngine, ImportanceScorer, ImportanceWeights, MemorySource,
@@ -9,6 +7,8 @@ use clawhdf5_agent::knowledge::KnowledgeCache;
 use clawhdf5_agent::temporal::TemporalIndex;
 use clawhdf5_agent::vector_search;
 use clawhdf5_agent::{AgentMemory, HDF5Memory, MemoryConfig, MemoryEntry};
+use criterion::{BenchmarkId, Criterion, criterion_group, criterion_main};
+use tempfile::TempDir;
 
 // ---------------------------------------------------------------------------
 // Simple deterministic PRNG (LCG)
@@ -37,11 +37,42 @@ impl Rng {
 // ---------------------------------------------------------------------------
 
 const WORDS: &[&str] = &[
-    "the", "quick", "brown", "fox", "jumps", "over", "lazy", "dog", "rust",
-    "programming", "memory", "vector", "search", "index", "data", "system",
-    "agent", "knowledge", "graph", "neural", "network", "machine", "learning",
-    "deep", "embedding", "cosine", "similarity", "token", "chunk", "session",
-    "channel", "hybrid", "temporal", "consolidation", "episodic", "semantic",
+    "the",
+    "quick",
+    "brown",
+    "fox",
+    "jumps",
+    "over",
+    "lazy",
+    "dog",
+    "rust",
+    "programming",
+    "memory",
+    "vector",
+    "search",
+    "index",
+    "data",
+    "system",
+    "agent",
+    "knowledge",
+    "graph",
+    "neural",
+    "network",
+    "machine",
+    "learning",
+    "deep",
+    "embedding",
+    "cosine",
+    "similarity",
+    "token",
+    "chunk",
+    "session",
+    "channel",
+    "hybrid",
+    "temporal",
+    "consolidation",
+    "episodic",
+    "semantic",
 ];
 
 fn make_vec(rng: &mut Rng, dim: usize) -> Vec<f32> {
@@ -84,9 +115,7 @@ fn vector_search_latency(c: &mut Criterion) {
             BenchmarkId::new("bench_cosine_search", label),
             &n,
             |b, _| {
-                b.iter(|| {
-                    vector_search::cosine_similarity_batch(&query, &vectors, &tombstones)
-                });
+                b.iter(|| vector_search::cosine_similarity_batch(&query, &vectors, &tombstones));
             },
         );
     }
@@ -283,7 +312,8 @@ fn consolidation_benches(c: &mut Criterion) {
         let records = engine.records().to_vec();
         let weights = ImportanceWeights::default();
         let query_embedding = make_vec(&mut rng, DIM);
-        let sample_text = "This is a substantive memory about system architecture and deployment patterns";
+        let sample_text =
+            "This is a substantive memory about system architecture and deployment patterns";
 
         group.bench_function("bench_importance_scoring", |b| {
             b.iter(|| {
@@ -379,29 +409,24 @@ fn hdf5_write_scale_benches(c: &mut Criterion) {
     for (label, n) in [("100", 100usize), ("1k", 1_000), ("10k", 10_000)] {
         let entries: Vec<MemoryEntry> = (0..n).map(|i| make_bench_entry(i, DIM)).collect();
 
-        group.bench_with_input(
-            BenchmarkId::new("batch_write", label),
-            &n,
-            |b, _| {
-                b.iter_batched(
-                    || {
-                        let dir = TempDir::new().expect("TempDir");
-                        let mut cfg =
-                            MemoryConfig::new(dir.path().join("w.h5"), "bench", DIM);
-                        cfg.wal_enabled = false;
-                        cfg.compact_threshold = 0.0;
-                        let mem = HDF5Memory::create(cfg).expect("HDF5Memory");
-                        (dir, mem, entries.clone())
-                    },
-                    |(dir, mut mem, e)| {
-                        mem.save_batch(e).expect("save_batch");
-                        // Keep dir alive so the file isn't deleted during measurement
-                        std::hint::black_box(dir);
-                    },
-                    criterion::BatchSize::LargeInput,
-                );
-            },
-        );
+        group.bench_with_input(BenchmarkId::new("batch_write", label), &n, |b, _| {
+            b.iter_batched(
+                || {
+                    let dir = TempDir::new().expect("TempDir");
+                    let mut cfg = MemoryConfig::new(dir.path().join("w.h5"), "bench", DIM);
+                    cfg.wal_enabled = false;
+                    cfg.compact_threshold = 0.0;
+                    let mem = HDF5Memory::create(cfg).expect("HDF5Memory");
+                    (dir, mem, entries.clone())
+                },
+                |(dir, mut mem, e)| {
+                    mem.save_batch(e).expect("save_batch");
+                    // Keep dir alive so the file isn't deleted during measurement
+                    std::hint::black_box(dir);
+                },
+                criterion::BatchSize::LargeInput,
+            );
+        });
     }
 
     group.finish();

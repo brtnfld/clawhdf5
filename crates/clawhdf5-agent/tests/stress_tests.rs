@@ -1,9 +1,9 @@
-use std::path::Path;
-use tempfile::TempDir;
 use clawhdf5_agent::bm25::BM25Index;
 use clawhdf5_agent::hybrid::hybrid_search;
 use clawhdf5_agent::vector_search;
 use clawhdf5_agent::{AgentMemory, HDF5Memory, MemoryConfig, MemoryEntry};
+use std::path::Path;
+use tempfile::TempDir;
 
 // ---------------------------------------------------------------------------
 // Helpers
@@ -169,7 +169,8 @@ fn test_large_embeddings_1536() {
     // Verify search works on large dims
     let (_, cache, _, _) = clawhdf5_agent::storage::read_from_disk(&path).unwrap();
     let query = make_vec(&mut Rng::new(99), 1536);
-    let results = vector_search::cosine_similarity_batch(&query, &cache.embeddings, &cache.tombstones);
+    let results =
+        vector_search::cosine_similarity_batch(&query, &cache.embeddings, &cache.tombstones);
     assert_eq!(results.len(), 10_000);
 }
 
@@ -206,7 +207,8 @@ fn test_concurrent_like_pattern() {
     // Read cache for search
     let (_, cache, _, _) = clawhdf5_agent::storage::read_from_disk(&path).unwrap();
     let query = make_vec(&mut Rng::new(99), 8);
-    let results = vector_search::cosine_similarity_batch(&query, &cache.embeddings, &cache.tombstones);
+    let results =
+        vector_search::cosine_similarity_batch(&query, &cache.embeddings, &cache.tombstones);
     assert_eq!(results.len(), 100);
 
     // Delete 20 entries
@@ -291,11 +293,11 @@ fn test_file_size_growth() {
 #[test]
 fn test_vector_search_accuracy() {
     let vectors = vec![
-        vec![1.0, 0.0, 0.0, 0.0],                           // idx 0: unit x
-        vec![0.0, 1.0, 0.0, 0.0],                           // idx 1: unit y
-        vec![0.0, 0.0, 1.0, 0.0],                           // idx 2: unit z
+        vec![1.0, 0.0, 0.0, 0.0],                                   // idx 0: unit x
+        vec![0.0, 1.0, 0.0, 0.0],                                   // idx 1: unit y
+        vec![0.0, 0.0, 1.0, 0.0],                                   // idx 2: unit z
         vec![1.0 / 2.0_f32.sqrt(), 1.0 / 2.0_f32.sqrt(), 0.0, 0.0], // idx 3: 45 deg
-        vec![-1.0, 0.0, 0.0, 0.0],                          // idx 4: opposite x
+        vec![-1.0, 0.0, 0.0, 0.0],                                  // idx 4: opposite x
     ];
     let tombstones = vec![0u8; 5];
     let query = vec![1.0, 0.0, 0.0, 0.0]; // unit x
@@ -325,11 +327,11 @@ fn test_vector_search_accuracy() {
 #[test]
 fn test_bm25_accuracy() {
     let docs = vec![
-        "rust rust rust systems programming".to_string(),    // idx 0: 3x "rust"
-        "rust programming language".to_string(),             // idx 1: 1x "rust"
-        "python scripting language".to_string(),             // idx 2: 0x "rust"
-        "java enterprise rust system".to_string(),           // idx 3: 1x "rust"
-        "javascript web development frontend".to_string(),   // idx 4: 0x "rust"
+        "rust rust rust systems programming".to_string(), // idx 0: 3x "rust"
+        "rust programming language".to_string(),          // idx 1: 1x "rust"
+        "python scripting language".to_string(),          // idx 2: 0x "rust"
+        "java enterprise rust system".to_string(),        // idx 3: 1x "rust"
+        "javascript web development frontend".to_string(), // idx 4: 0x "rust"
     ];
     let tombstones = vec![0u8; 5];
     let index = BM25Index::build(&docs, &tombstones);
@@ -343,8 +345,14 @@ fn test_bm25_accuracy() {
 
     // Docs 2 and 4 should not appear (no "rust")
     let result_ids: Vec<usize> = results.iter().map(|(id, _)| *id).collect();
-    assert!(!result_ids.contains(&2), "doc without 'rust' should not appear");
-    assert!(!result_ids.contains(&4), "doc without 'rust' should not appear");
+    assert!(
+        !result_ids.contains(&2),
+        "doc without 'rust' should not appear"
+    );
+    assert!(
+        !result_ids.contains(&4),
+        "doc without 'rust' should not appear"
+    );
 
     // Query for rare term "enterprise"
     let rare_results = index.search("enterprise", 10);
@@ -355,8 +363,14 @@ fn test_bm25_accuracy() {
     let multi = index.search("rust programming", 10);
     assert!(multi.len() >= 2);
     let top2: Vec<usize> = multi.iter().take(2).map(|(id, _)| *id).collect();
-    assert!(top2.contains(&0), "doc 0 should be in top 2 for 'rust programming'");
-    assert!(top2.contains(&1), "doc 1 should be in top 2 for 'rust programming'");
+    assert!(
+        top2.contains(&0),
+        "doc 0 should be in top 2 for 'rust programming'"
+    );
+    assert!(
+        top2.contains(&1),
+        "doc 1 should be in top 2 for 'rust programming'"
+    );
 }
 
 // ---------------------------------------------------------------------------
@@ -371,18 +385,18 @@ fn test_hybrid_search_correctness() {
     // Doc 3: some vector, some keyword
     // Doc 4: filler
     let vectors = vec![
-        vec![1.0, 0.0, 0.0, 0.0],  // idx 0: identical to query
-        vec![0.0, 1.0, 0.0, 0.0],  // idx 1: orthogonal
-        vec![0.7, 0.7, 0.0, 0.0],  // idx 2: partial match
-        vec![0.3, 0.3, 0.3, 0.3],  // idx 3: mild match
-        vec![0.0, 0.0, 0.0, 1.0],  // idx 4: orthogonal
+        vec![1.0, 0.0, 0.0, 0.0], // idx 0: identical to query
+        vec![0.0, 1.0, 0.0, 0.0], // idx 1: orthogonal
+        vec![0.7, 0.7, 0.0, 0.0], // idx 2: partial match
+        vec![0.3, 0.3, 0.3, 0.3], // idx 3: mild match
+        vec![0.0, 0.0, 0.0, 1.0], // idx 4: orthogonal
     ];
     let chunks = vec![
-        "gamma delta epsilon phi".to_string(),             // 0: no keyword match
-        "alpha alpha alpha beta alpha".to_string(),        // 1: heavy keyword
-        "alpha gamma delta".to_string(),                   // 2: some keyword
-        "alpha beta gamma".to_string(),                    // 3: some keyword
-        "alpha omega sigma".to_string(),                   // 4: some keyword
+        "gamma delta epsilon phi".to_string(), // 0: no keyword match
+        "alpha alpha alpha beta alpha".to_string(), // 1: heavy keyword
+        "alpha gamma delta".to_string(),       // 2: some keyword
+        "alpha beta gamma".to_string(),        // 3: some keyword
+        "alpha omega sigma".to_string(),       // 4: some keyword
     ];
     let tombstones = vec![0u8; 5];
     let bm25 = BM25Index::build(&chunks, &tombstones);
@@ -390,19 +404,43 @@ fn test_hybrid_search_correctness() {
 
     // Vector-only: doc 0 should win
     let vec_only = hybrid_search(
-        &query_emb, "alpha", &vectors, &chunks, &tombstones, &bm25, 1.0, 0.0, 5,
+        &query_emb,
+        "alpha",
+        &vectors,
+        &chunks,
+        &tombstones,
+        &bm25,
+        1.0,
+        0.0,
+        5,
     );
     assert_eq!(vec_only[0].0, 0, "vector-only: doc 0 should win");
 
     // Keyword-only: doc 1 should win (most "alpha" occurrences)
     let kw_only = hybrid_search(
-        &query_emb, "alpha", &vectors, &chunks, &tombstones, &bm25, 0.0, 1.0, 5,
+        &query_emb,
+        "alpha",
+        &vectors,
+        &chunks,
+        &tombstones,
+        &bm25,
+        0.0,
+        1.0,
+        5,
     );
     assert_eq!(kw_only[0].0, 1, "keyword-only: doc 1 should win");
 
     // Balanced: both doc 0 and doc 1 should appear in top 3
     let balanced = hybrid_search(
-        &query_emb, "alpha", &vectors, &chunks, &tombstones, &bm25, 0.5, 0.5, 5,
+        &query_emb,
+        "alpha",
+        &vectors,
+        &chunks,
+        &tombstones,
+        &bm25,
+        0.5,
+        0.5,
+        5,
     );
     let top3: Vec<usize> = balanced.iter().take(3).map(|(id, _)| *id).collect();
     assert!(top3.contains(&0), "balanced: doc 0 should be in top 3");
@@ -549,7 +587,15 @@ fn test_search_all_tombstoned() {
     assert!(bm25_results.is_empty());
 
     let hybrid_results = hybrid_search(
-        &query, "hello", &vectors, &chunks, &tombstones, &bm25, 0.5, 0.5, 10,
+        &query,
+        "hello",
+        &vectors,
+        &chunks,
+        &tombstones,
+        &bm25,
+        0.5,
+        0.5,
+        10,
     );
     assert!(hybrid_results.is_empty());
 }

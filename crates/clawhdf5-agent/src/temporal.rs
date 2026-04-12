@@ -32,9 +32,7 @@ impl TemporalIndex {
     /// via [`remove`] before re-inserting if they want upsert semantics.
     pub fn insert(&mut self, id: u64, timestamp: f64) {
         let key = (timestamp, id);
-        let pos = self
-            .entries
-            .partition_point(|&e| e < key);
+        let pos = self.entries.partition_point(|&e| e < key);
         self.entries.insert(pos, key);
     }
 
@@ -62,11 +60,7 @@ impl TemporalIndex {
 
     /// Return the `n` oldest record IDs (lowest timestamps), oldest first.
     pub fn earliest(&self, n: usize) -> Vec<u64> {
-        self.entries
-            .iter()
-            .take(n)
-            .map(|&(_, id)| id)
-            .collect()
+        self.entries.iter().take(n).map(|&(_, id)| id).collect()
     }
 
     /// Return up to `n` records strictly *before* `ts`, most-recent-first.
@@ -338,10 +332,7 @@ impl EntityTimeline {
     }
 
     /// Full change log for `entity_id`, sorted by timestamp ascending.
-    pub fn get_entity_history(
-        &self,
-        entity_id: &str,
-    ) -> Vec<(f64, String, String, String)> {
+    pub fn get_entity_history(&self, entity_id: &str) -> Vec<(f64, String, String, String)> {
         self.history
             .get(entity_id)
             .map(|changes| {
@@ -364,11 +355,7 @@ impl EntityTimeline {
     /// changes whose timestamp is ≤ `timestamp`.
     ///
     /// Returns a map of `property_key → current_value` at that instant.
-    pub fn get_entity_state_at(
-        &self,
-        entity_id: &str,
-        timestamp: f64,
-    ) -> HashMap<String, String> {
+    pub fn get_entity_state_at(&self, entity_id: &str, timestamp: f64) -> HashMap<String, String> {
         let mut state: HashMap<String, String> = HashMap::new();
 
         if let Some(changes) = self.history.get(entity_id) {
@@ -521,7 +508,10 @@ mod tests {
 
         let sorted = dag.get_all_sessions_sorted();
         assert_eq!(
-            sorted.iter().map(|n| n.session_id.as_str()).collect::<Vec<_>>(),
+            sorted
+                .iter()
+                .map(|n| n.session_id.as_str())
+                .collect::<Vec<_>>(),
             vec!["a", "b", "c"]
         );
     }
@@ -538,7 +528,10 @@ mod tests {
 
         let chain = dag.get_session_chain("leaf");
         assert_eq!(
-            chain.iter().map(|n| n.session_id.as_str()).collect::<Vec<_>>(),
+            chain
+                .iter()
+                .map(|n| n.session_id.as_str())
+                .collect::<Vec<_>>(),
             vec!["root", "mid", "leaf"]
         );
     }
@@ -631,8 +624,8 @@ mod tests {
     #[test]
     fn test_reranker_latest_recent_beats_old() {
         let now = 1_000_000.0_f64;
-        let recent = now - 3600.0;   // 1 hour ago
-        let old = now - 864_000.0;   // 10 days ago
+        let recent = now - 3600.0; // 1 hour ago
+        let old = now - 864_000.0; // 10 days ago
 
         let b_recent = TemporalReRanker::temporal_boost(recent, &TemporalHint::Latest, now);
         let b_old = TemporalReRanker::temporal_boost(old, &TemporalHint::Latest, now);
@@ -718,7 +711,10 @@ mod tests {
         assert_eq!(hist.len(), 3);
         assert_eq!(hist[0], (1.0, "status".into(), "".into(), "active".into()));
         assert_eq!(hist[1], (2.0, "role".into(), "".into(), "admin".into()));
-        assert_eq!(hist[2], (3.0, "status".into(), "active".into(), "inactive".into()));
+        assert_eq!(
+            hist[2],
+            (3.0, "status".into(), "active".into(), "inactive".into())
+        );
     }
 
     #[test]

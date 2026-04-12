@@ -6,8 +6,8 @@
 
 use std::collections::HashSet;
 
-use crate::pq::ProductQuantizer;
 use crate::cosine_similarity_prenorm;
+use crate::pq::ProductQuantizer;
 
 /// A shared entry in the SEIL (Shared Entry IVF Lists) layout.
 /// Instead of duplicating vectors across multiple lists, we store
@@ -90,7 +90,11 @@ impl IVFIndex {
 
         // Initialize centroids from evenly-spaced vectors
         let mut centroids = vec![0.0f32; actual_clusters * dim];
-        let step = if n > actual_clusters { n / actual_clusters } else { 1 };
+        let step = if n > actual_clusters {
+            n / actual_clusters
+        } else {
+            1
+        };
         for c in 0..actual_clusters {
             let src_idx = (c * step) % n;
             let dst = &mut centroids[c * dim..(c + 1) * dim];
@@ -164,7 +168,9 @@ impl IVFIndex {
 
                 // Score all centroids using AIR metric with the vector-to-global
                 // direction as query_direction proxy
-                let query_dir: Vec<f32> = global_center.iter().zip(vec.iter())
+                let query_dir: Vec<f32> = global_center
+                    .iter()
+                    .zip(vec.iter())
                     .map(|(g, v)| g - v)
                     .collect();
 
@@ -252,8 +258,7 @@ impl IVFIndex {
                 } else {
                     clawhdf5_accel::vector_norm(&vectors[idx])
                 };
-                let score =
-                    cosine_similarity_prenorm(query, query_norm, &vectors[idx], vec_norm);
+                let score = cosine_similarity_prenorm(query, query_norm, &vectors[idx], vec_norm);
                 results.push((idx, score));
             }
         }
@@ -302,8 +307,7 @@ impl IVFIndex {
                 } else {
                     clawhdf5_accel::vector_norm(&vectors[idx])
                 };
-                let score =
-                    cosine_similarity_prenorm(query, query_norm, &vectors[idx], vec_norm);
+                let score = cosine_similarity_prenorm(query, query_norm, &vectors[idx], vec_norm);
                 results.push((idx, score));
             }
         }
@@ -350,7 +354,12 @@ impl IVFIndex {
         }
         let total: usize = self.inverted_lists.iter().map(|l| l.len()).sum();
         let avg = total as f32 / self.inverted_lists.len() as f32;
-        let max_size = self.inverted_lists.iter().map(|l| l.len()).max().unwrap_or(0);
+        let max_size = self
+            .inverted_lists
+            .iter()
+            .map(|l| l.len())
+            .max()
+            .unwrap_or(0);
         max_size as f32 <= avg * 3.0
     }
 
@@ -650,7 +659,10 @@ mod tests {
     fn ivf_search_nprobe_all_matches_brute_force() {
         let dim = 32;
         let vectors = make_vectors(100, dim, 42);
-        let norms: Vec<f32> = vectors.iter().map(|v| clawhdf5_accel::vector_norm(v)).collect();
+        let norms: Vec<f32> = vectors
+            .iter()
+            .map(|v| clawhdf5_accel::vector_norm(v))
+            .collect();
         let tombstones = vec![0u8; 100];
         let query = vectors[0].clone();
 
@@ -684,7 +696,10 @@ mod tests {
     fn ivf_search_nprobe_1_returns_results() {
         let dim = 32;
         let vectors = make_vectors(200, dim, 42);
-        let norms: Vec<f32> = vectors.iter().map(|v| clawhdf5_accel::vector_norm(v)).collect();
+        let norms: Vec<f32> = vectors
+            .iter()
+            .map(|v| clawhdf5_accel::vector_norm(v))
+            .collect();
         let tombstones = vec![0u8; 200];
         let query = vectors[0].clone();
 
@@ -698,7 +713,10 @@ mod tests {
         let dim = 64;
         let n = 500;
         let vectors = make_vectors(n, dim, 42);
-        let norms: Vec<f32> = vectors.iter().map(|v| clawhdf5_accel::vector_norm(v)).collect();
+        let norms: Vec<f32> = vectors
+            .iter()
+            .map(|v| clawhdf5_accel::vector_norm(v))
+            .collect();
         let tombstones = vec![0u8; n];
         let query = vectors[0].clone();
 
@@ -723,10 +741,7 @@ mod tests {
         let ivfpq_ids: Vec<usize> = results.iter().map(|r| r.0).collect();
         let overlap = exact_top10.iter().filter(|i| ivfpq_ids.contains(i)).count();
         // IVF-PQ recall@10 should be > 80%
-        assert!(
-            overlap >= 8,
-            "IVF-PQ recall too low: {overlap}/10 overlap"
-        );
+        assert!(overlap >= 8, "IVF-PQ recall too low: {overlap}/10 overlap");
     }
 
     #[test]
@@ -775,7 +790,10 @@ mod tests {
     fn ivf_respects_tombstones() {
         let dim = 16;
         let vectors = make_vectors(50, dim, 42);
-        let norms: Vec<f32> = vectors.iter().map(|v| clawhdf5_accel::vector_norm(v)).collect();
+        let norms: Vec<f32> = vectors
+            .iter()
+            .map(|v| clawhdf5_accel::vector_norm(v))
+            .collect();
         let mut tombstones = vec![0u8; 50];
         tombstones[0] = 1;
         tombstones[1] = 1;
@@ -795,7 +813,10 @@ mod tests {
         let centroid = vec![0.9, 0.1, 0.0, 0.0];
         let query_dir = vec![1.0, 0.0, 0.0, 0.0];
         let score = air_score(&vector, &centroid, &query_dir);
-        assert!(score > 0.0, "AIR score should be positive for aligned vectors");
+        assert!(
+            score > 0.0,
+            "AIR score should be positive for aligned vectors"
+        );
     }
 
     #[test]
@@ -808,7 +829,11 @@ mod tests {
 
         // With rf=2, each vector appears in 2 lists, so total SEIL entries = 2 * n
         let total_seil: usize = ivf.seil_lists.iter().map(|l| l.len()).sum();
-        assert_eq!(total_seil, 200 * 2, "each vector should appear in 2 SEIL lists");
+        assert_eq!(
+            total_seil,
+            200 * 2,
+            "each vector should appear in 2 SEIL lists"
+        );
 
         // Each SEIL entry should reference a valid vector index
         for list in &ivf.seil_lists {
@@ -824,7 +849,10 @@ mod tests {
         let dim = 64;
         let n = 1000;
         let vectors = make_vectors(n, dim, 42);
-        let norms: Vec<f32> = vectors.iter().map(|v| clawhdf5_accel::vector_norm(v)).collect();
+        let norms: Vec<f32> = vectors
+            .iter()
+            .map(|v| clawhdf5_accel::vector_norm(v))
+            .collect();
         let tombstones = vec![0u8; n];
         let nprobe = 3;
         let k = 10;
@@ -836,7 +864,10 @@ mod tests {
             .iter()
             .enumerate()
             .map(|(i, v)| {
-                (i, cosine_similarity_prenorm(&query, query_norm, v, norms[i]))
+                (
+                    i,
+                    cosine_similarity_prenorm(&query, query_norm, v, norms[i]),
+                )
             })
             .collect();
         exact.sort_by(|a, b| b.1.partial_cmp(&a.1).unwrap_or(std::cmp::Ordering::Equal));
@@ -850,7 +881,8 @@ mod tests {
 
         // RAIRS with rf=2
         let ivf_rairs = IVFIndex::train_rairs(&vectors, dim, 20, 2);
-        let rairs_results = ivf_rairs.search_rairs(&query, &vectors, &norms, &tombstones, nprobe, k);
+        let rairs_results =
+            ivf_rairs.search_rairs(&query, &vectors, &norms, &tombstones, nprobe, k);
         let rairs_ids: Vec<usize> = rairs_results.iter().map(|r| r.0).collect();
         let rairs_recall = exact_topk.iter().filter(|i| rairs_ids.contains(i)).count();
 
@@ -871,7 +903,8 @@ mod tests {
         let query = vectors[0].clone();
         let probe_clusters = ivf.nearest_clusters_air(&query, 3);
 
-        let total_entries: usize = probe_clusters.iter()
+        let total_entries: usize = probe_clusters
+            .iter()
             .map(|&c| ivf.seil_lists[c].len())
             .sum();
 
@@ -904,7 +937,10 @@ mod tests {
         let dim = 32;
         let n = 50;
         let vectors = make_vectors(n, dim, 42);
-        let norms: Vec<f32> = vectors.iter().map(|v| clawhdf5_accel::vector_norm(v)).collect();
+        let norms: Vec<f32> = vectors
+            .iter()
+            .map(|v| clawhdf5_accel::vector_norm(v))
+            .collect();
         let tombstones = vec![0u8; n];
         let query = vectors[0].clone();
         let k = 10;
@@ -919,7 +955,10 @@ mod tests {
             .iter()
             .enumerate()
             .map(|(i, v)| {
-                (i, cosine_similarity_prenorm(&query, query_norm, v, norms[i]))
+                (
+                    i,
+                    cosine_similarity_prenorm(&query, query_norm, v, norms[i]),
+                )
             })
             .collect();
         brute.sort_by(|a, b| b.1.partial_cmp(&a.1).unwrap_or(std::cmp::Ordering::Equal));
@@ -938,7 +977,10 @@ mod tests {
         let dim = 64;
         let n = 500;
         let vectors = make_vectors(n, dim, 42);
-        let norms: Vec<f32> = vectors.iter().map(|v| clawhdf5_accel::vector_norm(v)).collect();
+        let norms: Vec<f32> = vectors
+            .iter()
+            .map(|v| clawhdf5_accel::vector_norm(v))
+            .collect();
         let tombstones = vec![0u8; n];
         let query = vectors[0].clone();
 
@@ -952,7 +994,10 @@ mod tests {
 
         // Verify results are sorted by score descending
         for w in results.windows(2) {
-            assert!(w[0].1 >= w[1].1, "results should be sorted by score descending");
+            assert!(
+                w[0].1 >= w[1].1,
+                "results should be sorted by score descending"
+            );
         }
 
         // Check recall vs brute force
@@ -961,7 +1006,10 @@ mod tests {
             .iter()
             .enumerate()
             .map(|(i, v)| {
-                (i, cosine_similarity_prenorm(&query, query_norm, v, norms[i]))
+                (
+                    i,
+                    cosine_similarity_prenorm(&query, query_norm, v, norms[i]),
+                )
             })
             .collect();
         exact.sort_by(|a, b| b.1.partial_cmp(&a.1).unwrap_or(std::cmp::Ordering::Equal));
@@ -977,13 +1025,19 @@ mod tests {
         let dim = 32;
         let n = 100;
         let vectors = make_vectors(n, dim, 42);
-        let norms: Vec<f32> = vectors.iter().map(|v| clawhdf5_accel::vector_norm(v)).collect();
+        let norms: Vec<f32> = vectors
+            .iter()
+            .map(|v| clawhdf5_accel::vector_norm(v))
+            .collect();
         let tombstones = vec![0u8; n];
         let query = vectors[0].clone();
 
         let ivf = IVFIndex::train_rairs(&vectors, dim, 5, 2);
         let results = ivf.search(&query, &vectors, &norms, &tombstones, 5, 10);
-        assert!(!results.is_empty(), "standard search should still work on RAIRS index");
+        assert!(
+            !results.is_empty(),
+            "standard search should still work on RAIRS index"
+        );
 
         // Results should be sorted
         for w in results.windows(2) {

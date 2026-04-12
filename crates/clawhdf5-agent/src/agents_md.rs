@@ -3,10 +3,10 @@
 //! Produces a structured Markdown self-description of the agent's memory file,
 //! suitable for session initialization or introspection.
 
+use crate::MemoryConfig;
 use crate::cache::MemoryCache;
 use crate::knowledge::KnowledgeCache;
 use crate::session::SessionCache;
-use crate::MemoryConfig;
 
 /// Generate AGENTS.md content from memory state components.
 pub fn generate(
@@ -54,10 +54,7 @@ pub fn generate(
 
     // Sessions section
     let session_count = sessions.len();
-    let latest = sessions
-        .latest_session_id()
-        .unwrap_or("none")
-        .to_string();
+    let latest = sessions.latest_session_id().unwrap_or("none").to_string();
 
     md.push_str("## Sessions\n");
     md.push_str(&format!("- Total sessions: {session_count}\n"));
@@ -220,10 +217,7 @@ mod tests {
 
         let md = generate(&config, &cache, &sessions, &knowledge);
         assert!(md.contains("Total sessions: 2"), "md = {md}");
-        assert!(
-            md.contains("Most recent session: sess-2"),
-            "md = {md}"
-        );
+        assert!(md.contains("Most recent session: sess-2"), "md = {md}");
     }
 
     #[test]
@@ -270,7 +264,10 @@ mod tests {
             "md = {md}"
         );
         // Should NOT contain Zeta or Eta in the top entities line
-        let top_line = md.lines().find(|l| l.starts_with("- Top entities:")).unwrap();
+        let top_line = md
+            .lines()
+            .find(|l| l.starts_with("- Top entities:"))
+            .unwrap();
         assert!(!top_line.contains("Zeta"), "top_line = {top_line}");
         assert!(!top_line.contains("Eta"), "top_line = {top_line}");
     }

@@ -133,11 +133,7 @@ impl WalFile {
     }
 
     /// Append a tombstone entry (deletion).
-    pub fn append_tombstone(
-        &mut self,
-        index: usize,
-        timestamp: f64,
-    ) -> Result<(), MemoryError> {
+    pub fn append_tombstone(&mut self, index: usize, timestamp: f64) -> Result<(), MemoryError> {
         let f = self.file.as_mut().ok_or_else(|| {
             MemoryError::Io(std::io::Error::new(
                 std::io::ErrorKind::Other,
@@ -495,7 +491,10 @@ mod tests {
 
         // .h5 file should NOT have been updated (still initial size)
         let after_size = std::fs::metadata(&h5_path).unwrap().len();
-        assert_eq!(initial_size, after_size, ".h5 should not grow with WAL enabled");
+        assert_eq!(
+            initial_size, after_size,
+            ".h5 should not grow with WAL enabled"
+        );
 
         // .wal file should exist
         let wal_path = h5_path.with_extension("h5.wal");
@@ -513,8 +512,11 @@ mod tests {
 
         // Save 5 entries (at threshold but not over)
         for i in 0..5 {
-            mem.save(make_entry(&format!("entry {i}"), &[i as f32, 0.0, 0.0, 0.0]))
-                .unwrap();
+            mem.save(make_entry(
+                &format!("entry {i}"),
+                &[i as f32, 0.0, 0.0, 0.0],
+            ))
+            .unwrap();
         }
         // WAL should still have 5 pending (not yet merged, threshold is >=)
         assert_eq!(mem.wal_pending_count(), 5);

@@ -1,7 +1,7 @@
 //! Benchmark: File::open vs MmapFile::open, sequential vs parallel chunk decompression.
 
-use criterion::{Criterion, black_box, criterion_group, criterion_main};
 use clawhdf5::FileBuilder;
+use criterion::{Criterion, black_box, criterion_group, criterion_main};
 
 fn generate_f64_file(num_elements: usize) -> Vec<u8> {
     let values: Vec<f64> = (0..num_elements).map(|i| i as f64 * 0.001).collect();

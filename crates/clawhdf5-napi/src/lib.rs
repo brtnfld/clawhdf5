@@ -125,9 +125,8 @@ impl ClawhdfMemory {
     /// `1536` for OpenAI `text-embedding-3-small`).
     #[napi(factory)]
     pub fn create(path: String, embedding_dim: u32) -> napi::Result<ClawhdfMemory> {
-        let backend =
-            ClawhdfBackend::create(std::path::Path::new(&path), embedding_dim as usize)
-                .map_err(napi::Error::from_reason)?;
+        let backend = ClawhdfBackend::create(std::path::Path::new(&path), embedding_dim as usize)
+            .map_err(napi::Error::from_reason)?;
         Ok(Self { inner: backend })
     }
 
@@ -135,8 +134,7 @@ impl ClawhdfMemory {
     #[napi(factory)]
     pub fn open(path: String) -> napi::Result<ClawhdfMemory> {
         let backend =
-            ClawhdfBackend::open(std::path::Path::new(&path))
-                .map_err(napi::Error::from_reason)?;
+            ClawhdfBackend::open(std::path::Path::new(&path)).map_err(napi::Error::from_reason)?;
         Ok(Self { inner: backend })
     }
 
@@ -191,8 +189,11 @@ impl ClawhdfMemory {
         num_lines: Option<u32>,
     ) -> Option<String> {
         use clawhdf5_agent::openclaw::MemoryBackend;
-        self.inner
-            .get(&path, from_line.map(|n| n as usize), num_lines.map(|n| n as usize))
+        self.inner.get(
+            &path,
+            from_line.map(|n| n as usize),
+            num_lines.map(|n| n as usize),
+        )
     }
 
     /// Store raw `content` at `path`, overwriting any previous data for that path.
@@ -253,17 +254,13 @@ impl ClawhdfMemory {
     /// Apply one Hebbian decay tick to all activation weights and flush to disk.
     #[napi]
     pub fn tick_session(&mut self) -> napi::Result<()> {
-        self.inner
-            .tick_session()
-            .map_err(napi::Error::from_reason)
+        self.inner.tick_session().map_err(napi::Error::from_reason)
     }
 
     /// Force a WAL merge: flush the .h5 file and truncate the WAL log.
     #[napi]
     pub fn flush_wal(&mut self) -> napi::Result<()> {
-        self.inner
-            .flush_wal()
-            .map_err(napi::Error::from_reason)
+        self.inner.flush_wal().map_err(napi::Error::from_reason)
     }
 
     /// Run a full compaction cycle (decay + compact + WAL flush) and return
@@ -299,11 +296,7 @@ impl ClawhdfMemory {
     /// `defaultTtlSecs` sets the TTL applied when callers do not supply one
     /// (default 3600 s = 1 hour).
     #[napi]
-    pub fn enable_ephemeral(
-        &mut self,
-        max_entries: Option<u32>,
-        default_ttl_secs: Option<f64>,
-    ) {
+    pub fn enable_ephemeral(&mut self, max_entries: Option<u32>, default_ttl_secs: Option<f64>) {
         use clawhdf5_agent::ephemeral::EphemeralConfig;
         let config = EphemeralConfig {
             max_entries: max_entries.unwrap_or(10_000) as usize,

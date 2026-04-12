@@ -59,10 +59,7 @@ fn pack_strings(strings: &[String]) -> (Vec<u8>, usize) {
     (buf, max_len)
 }
 
-fn apply_compression(
-    ds: &mut clawhdf5_format::type_builders::DatasetBuilder,
-    opts: &WriteOptions,
-) {
+fn apply_compression(ds: &mut clawhdf5_format::type_builders::DatasetBuilder, opts: &WriteOptions) {
     if opts.compression {
         ds.with_deflate(opts.compression_level);
         ds.with_shuffle();
@@ -135,7 +132,11 @@ fn write_chunks_group(builder: &mut FileBuilder, data: &SqliteData, opts: &Write
     }
 
     // source_channel
-    let channels: Vec<String> = data.chunks.iter().map(|c| c.source_channel.clone()).collect();
+    let channels: Vec<String> = data
+        .chunks
+        .iter()
+        .map(|c| c.source_channel.clone())
+        .collect();
     let (ch_raw, ch_len) = pack_strings(&channels);
     group
         .create_dataset("source_channel")
@@ -225,14 +226,20 @@ fn write_entities_group(builder: &mut FileBuilder, data: &SqliteData) {
         .create_dataset("name")
         .with_compound_data(string_dtype(name_len), name_raw, n);
 
-    let types: Vec<String> = data.entities.iter().map(|e| e.entity_type.clone()).collect();
+    let types: Vec<String> = data
+        .entities
+        .iter()
+        .map(|e| e.entity_type.clone())
+        .collect();
     let (type_raw, type_len) = pack_strings(&types);
     group
         .create_dataset("type")
         .with_compound_data(string_dtype(type_len), type_raw, n);
 
     let emb_idxs: Vec<i64> = data.entities.iter().map(|e| e.embedding_idx).collect();
-    group.create_dataset("embedding_idx").with_i64_data(&emb_idxs);
+    group
+        .create_dataset("embedding_idx")
+        .with_i64_data(&emb_idxs);
 
     builder.add_group(group.finish());
 }

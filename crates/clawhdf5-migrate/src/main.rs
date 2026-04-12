@@ -115,7 +115,11 @@ fn main() -> Result<(), Box<dyn std::error::Error>> {
 
     eprintln!(
         "Migration complete: {} chunks, {} sessions, {} entities, {} relations (dim={})",
-        summary.chunks, summary.sessions, summary.entities, summary.relations, summary.embedding_dim
+        summary.chunks,
+        summary.sessions,
+        summary.entities,
+        summary.relations,
+        summary.embedding_dim
     );
 
     Ok(())
@@ -172,17 +176,8 @@ mod tests {
     }
 
     /// Insert a memory chunk with a known embedding.
-    fn insert_chunk(
-        conn: &Connection,
-        id: i64,
-        text: &str,
-        embedding: &[f32],
-        deleted: i32,
-    ) {
-        let blob: Vec<u8> = embedding
-            .iter()
-            .flat_map(|v| v.to_le_bytes())
-            .collect();
+    fn insert_chunk(conn: &Connection, id: i64, text: &str, embedding: &[f32], deleted: i32) {
+        let blob: Vec<u8> = embedding.iter().flat_map(|v| v.to_le_bytes()).collect();
         conn.execute(
             "INSERT INTO memory_chunks (id, chunk, embedding, source_channel, timestamp, session_id, tags, deleted)
              VALUES (?1, ?2, ?3, 'api', 1700000000.0, 'sess-1', 'tag1,tag2', ?4)",
@@ -246,11 +241,7 @@ mod tests {
         };
         hdf5_writer::write_hdf5(h5_path.to_str().unwrap(), &data, &opts).unwrap();
 
-        let summary = validate::validate_hdf5(
-            h5_path.to_str().unwrap(),
-            2, 1, 1, 1, 8,
-        )
-        .unwrap();
+        let summary = validate::validate_hdf5(h5_path.to_str().unwrap(), 2, 1, 1, 1, 8).unwrap();
         assert_eq!(summary.chunks, 2);
         assert_eq!(summary.sessions, 1);
         assert_eq!(summary.entities, 1);
@@ -283,11 +274,7 @@ mod tests {
         };
         hdf5_writer::write_hdf5(h5_path.to_str().unwrap(), &data, &opts).unwrap();
 
-        let summary = validate::validate_hdf5(
-            h5_path.to_str().unwrap(),
-            2, 0, 0, 0, 4,
-        )
-        .unwrap();
+        let summary = validate::validate_hdf5(h5_path.to_str().unwrap(), 2, 0, 0, 0, 4).unwrap();
         assert_eq!(summary.chunks, 2);
     }
 
@@ -359,18 +346,17 @@ mod tests {
         hdf5_writer::write_hdf5(h5_path.to_str().unwrap(), &data, &opts).unwrap();
 
         // Verify file was created and is valid
-        let summary = validate::validate_hdf5(
-            h5_path.to_str().unwrap(),
-            1, 0, 0, 0, 4,
-        )
-        .unwrap();
+        let summary = validate::validate_hdf5(h5_path.to_str().unwrap(), 1, 0, 0, 0, 4).unwrap();
         assert_eq!(summary.chunks, 1);
 
         // Verify float16 values are within tolerance
         for &v in &emb {
             let f16 = half::f16::from_f32(v);
             let roundtrip = f16.to_f32();
-            assert!((v - roundtrip).abs() < 0.01, "f16 roundtrip too lossy for {v}");
+            assert!(
+                (v - roundtrip).abs() < 0.01,
+                "f16 roundtrip too lossy for {v}"
+            );
         }
     }
 
@@ -398,8 +384,7 @@ mod tests {
             compression_level: 6,
             float16: false,
         };
-        hdf5_writer::write_hdf5(h5_compressed.to_str().unwrap(), &data, &opts_compressed)
-            .unwrap();
+        hdf5_writer::write_hdf5(h5_compressed.to_str().unwrap(), &data, &opts_compressed).unwrap();
 
         let opts_plain = hdf5_writer::WriteOptions {
             agent_id: "t".into(),
@@ -408,8 +393,7 @@ mod tests {
             compression_level: 4,
             float16: false,
         };
-        hdf5_writer::write_hdf5(h5_uncompressed.to_str().unwrap(), &data, &opts_plain)
-            .unwrap();
+        hdf5_writer::write_hdf5(h5_uncompressed.to_str().unwrap(), &data, &opts_plain).unwrap();
 
         let sz_c = std::fs::metadata(&h5_compressed).unwrap().len();
         let sz_u = std::fs::metadata(&h5_uncompressed).unwrap().len();
@@ -458,11 +442,7 @@ mod tests {
         };
         hdf5_writer::write_hdf5(h5_path.to_str().unwrap(), &data, &opts).unwrap();
 
-        let summary = validate::validate_hdf5(
-            h5_path.to_str().unwrap(),
-            0, 0, 0, 0, 0,
-        )
-        .unwrap();
+        let summary = validate::validate_hdf5(h5_path.to_str().unwrap(), 0, 0, 0, 0, 0).unwrap();
         assert_eq!(summary.chunks, 0);
     }
 
@@ -497,11 +477,8 @@ mod tests {
         };
         hdf5_writer::write_hdf5(h5_path.to_str().unwrap(), &data, &opts).unwrap();
 
-        let summary = validate::validate_hdf5(
-            h5_path.to_str().unwrap(),
-            1000, 0, 0, 0, 64,
-        )
-        .unwrap();
+        let summary =
+            validate::validate_hdf5(h5_path.to_str().unwrap(), 1000, 0, 0, 0, 64).unwrap();
         assert_eq!(summary.chunks, 1000);
     }
 
@@ -530,11 +507,7 @@ mod tests {
         };
         hdf5_writer::write_hdf5(h5_path.to_str().unwrap(), &data, &opts).unwrap();
 
-        let summary = validate::validate_hdf5(
-            h5_path.to_str().unwrap(),
-            0, 3, 0, 0, 0,
-        )
-        .unwrap();
+        let summary = validate::validate_hdf5(h5_path.to_str().unwrap(), 0, 3, 0, 0, 0).unwrap();
         assert_eq!(summary.sessions, 3);
     }
 
@@ -567,11 +540,7 @@ mod tests {
         };
         hdf5_writer::write_hdf5(h5_path.to_str().unwrap(), &data, &opts).unwrap();
 
-        let summary = validate::validate_hdf5(
-            h5_path.to_str().unwrap(),
-            0, 0, 3, 3, 0,
-        )
-        .unwrap();
+        let summary = validate::validate_hdf5(h5_path.to_str().unwrap(), 0, 0, 3, 3, 0).unwrap();
         assert_eq!(summary.entities, 3);
         assert_eq!(summary.relations, 3);
     }
@@ -598,12 +567,14 @@ mod tests {
         hdf5_writer::write_hdf5(h5_path.to_str().unwrap(), &data, &opts).unwrap();
 
         // Expect 5 chunks but only 1 was written
-        let result = validate::validate_hdf5(
-            h5_path.to_str().unwrap(),
-            5, 0, 0, 0, 4,
-        );
+        let result = validate::validate_hdf5(h5_path.to_str().unwrap(), 5, 0, 0, 0, 4);
         assert!(result.is_err());
-        assert!(result.unwrap_err().to_string().contains("Chunk count mismatch"));
+        assert!(
+            result
+                .unwrap_err()
+                .to_string()
+                .contains("Chunk count mismatch")
+        );
     }
 
     // ---------- Test 14: Metadata attributes are stored ----------
@@ -721,11 +692,7 @@ mod tests {
         };
         hdf5_writer::write_hdf5(h5_path.to_str().unwrap(), &data, &opts).unwrap();
 
-        let summary = validate::validate_hdf5(
-            h5_path.to_str().unwrap(),
-            4, 2, 2, 1, 16,
-        )
-        .unwrap();
+        let summary = validate::validate_hdf5(h5_path.to_str().unwrap(), 4, 2, 2, 1, 16).unwrap();
         assert_eq!(summary.chunks, 4);
         assert_eq!(summary.sessions, 2);
         assert_eq!(summary.entities, 2);
@@ -754,11 +721,13 @@ mod tests {
         };
         hdf5_writer::write_hdf5(h5_path.to_str().unwrap(), &data, &opts).unwrap();
 
-        let result = validate::validate_hdf5(
-            h5_path.to_str().unwrap(),
-            0, 99, 0, 0, 0,
-        );
+        let result = validate::validate_hdf5(h5_path.to_str().unwrap(), 0, 99, 0, 0, 0);
         assert!(result.is_err());
-        assert!(result.unwrap_err().to_string().contains("Session count mismatch"));
+        assert!(
+            result
+                .unwrap_err()
+                .to_string()
+                .contains("Session count mismatch")
+        );
     }
 }

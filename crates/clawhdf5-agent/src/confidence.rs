@@ -58,7 +58,10 @@ pub struct ScoredResult {
 ///
 /// * `results` - Slice of scored results sorted descending by score.
 /// * `config` - Confidence filter configuration.
-pub fn reject_low_confidence(results: &[ScoredResult], config: &ConfidenceConfig) -> Vec<ScoredResult> {
+pub fn reject_low_confidence(
+    results: &[ScoredResult],
+    config: &ConfidenceConfig,
+) -> Vec<ScoredResult> {
     if results.is_empty() {
         return Vec::new();
     }
@@ -73,9 +76,7 @@ pub fn reject_low_confidence(results: &[ScoredResult], config: &ConfidenceConfig
     // Rules 3 + 4 combined.
     let filtered: Vec<ScoredResult> = results
         .iter()
-        .filter(|r| {
-            r.score >= config.min_score && (top_score - r.score) <= config.min_gap
-        })
+        .filter(|r| r.score >= config.min_score && (top_score - r.score) <= config.min_gap)
         .cloned()
         .collect();
 
@@ -110,7 +111,10 @@ mod tests {
         };
         let results = vec![scored(0, 0.3), scored(1, 0.2)];
         let out = reject_low_confidence(&results, &config);
-        assert!(out.is_empty(), "nothing returned when top score < min_score");
+        assert!(
+            out.is_empty(),
+            "nothing returned when top score < min_score"
+        );
     }
 
     // --- rule 3: absolute threshold ---
@@ -122,7 +126,12 @@ mod tests {
             min_gap: f32::INFINITY,
             max_results: 10,
         };
-        let results = vec![scored(0, 0.9), scored(1, 0.5), scored(2, 0.3), scored(3, 0.1)];
+        let results = vec![
+            scored(0, 0.9),
+            scored(1, 0.5),
+            scored(2, 0.3),
+            scored(3, 0.1),
+        ];
         let out = reject_low_confidence(&results, &config);
         assert_eq!(out.len(), 2);
         assert_eq!(out[0].index, 0);
@@ -159,7 +168,12 @@ mod tests {
             min_gap: f32::INFINITY,
             max_results: 2,
         };
-        let results = vec![scored(0, 0.9), scored(1, 0.8), scored(2, 0.7), scored(3, 0.6)];
+        let results = vec![
+            scored(0, 0.9),
+            scored(1, 0.8),
+            scored(2, 0.7),
+            scored(3, 0.6),
+        ];
         let out = reject_low_confidence(&results, &config);
         assert_eq!(out.len(), 2);
     }
@@ -175,9 +189,9 @@ mod tests {
         };
         let results = vec![
             scored(0, 0.9),
-            scored(1, 0.6),  // gap 0.3 ≤ 0.4 and ≥ min_score – kept
-            scored(2, 0.4),  // gap 0.5 > 0.4 – dropped by gap
-            scored(3, 0.2),  // below min_score – dropped by threshold
+            scored(1, 0.6), // gap 0.3 ≤ 0.4 and ≥ min_score – kept
+            scored(2, 0.4), // gap 0.5 > 0.4 – dropped by gap
+            scored(3, 0.2), // below min_score – dropped by threshold
         ];
         let out = reject_low_confidence(&results, &config);
         assert_eq!(out.len(), 2);

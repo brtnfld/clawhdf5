@@ -31,10 +31,10 @@ pub mod types;
 pub mod variable;
 
 pub use cf::{CfAttributes, FillValue};
+pub use clawhdf5::AttrValue;
 pub use dimension::Dimension;
 pub use error::Error;
 pub use group::NetCDF4Group;
-pub use clawhdf5::AttrValue;
 pub use types::NcType;
 pub use variable::Variable;
 

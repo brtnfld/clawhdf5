@@ -17,6 +17,29 @@ use crate::error::FormatError;
 use crate::object_header::ObjectHeader;
 use crate::type_builders::{AttrValue, build_attr_message};
 
+// ---- BLAKE3 hashing ----
+
+/// Compute the BLAKE3 hash of `data` and return the raw 32-byte digest.
+///
+/// Enabled with the `blake3_hash` Cargo feature.
+#[cfg(feature = "blake3_hash")]
+pub fn blake3_hash(data: &[u8]) -> [u8; 32] {
+    *blake3::hash(data).as_bytes()
+}
+
+/// Compute the BLAKE3 hash of `data` and return the lowercase hex string.
+///
+/// Enabled with the `blake3_hash` Cargo feature.
+#[cfg(feature = "blake3_hash")]
+pub fn blake3_hex(data: &[u8]) -> String {
+    let hash = blake3_hash(data);
+    let mut hex = String::with_capacity(64);
+    for byte in hash.iter() {
+        hex.push_str(&format!("{byte:02x}"));
+    }
+    hex
+}
+
 // ---- Attribute name constants ----
 
 /// SHA-256 hex digest of the raw dataset bytes.
@@ -172,6 +195,32 @@ pub fn verify_dataset(
 #[cfg(test)]
 mod tests {
     use super::*;
+
+    #[cfg(feature = "blake3_hash")]
+    #[test]
+    fn blake3_hash_known_vector() {
+        // BLAKE3 of empty input has a well-known value
+        let h = blake3_hex(b"");
+        assert_eq!(
+            h,
+            "af1349b9f5f9a1a6a0404dea36dcc9499bcb25c9adc112b7cc9344f29bb835f6"
+        );
+    }
+
+    #[cfg(feature = "blake3_hash")]
+    #[test]
+    fn blake3_hash_returns_32_bytes() {
+        let h = blake3_hash(b"ClawOnion");
+        assert_eq!(h.len(), 32);
+    }
+
+    #[cfg(feature = "blake3_hash")]
+    #[test]
+    fn blake3_hex_length() {
+        let h = blake3_hex(b"test");
+        assert_eq!(h.len(), 64);
+        assert!(h.chars().all(|c| c.is_ascii_hexdigit()));
+    }
 
     #[test]
     fn sha256_empty() {

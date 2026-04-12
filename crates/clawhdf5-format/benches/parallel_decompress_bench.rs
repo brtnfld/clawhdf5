@@ -1,7 +1,6 @@
 //! Parallel decompression scaling benchmark for 48-core Xeon.
 //! Uses read_chunked_data which auto-dispatches to parallel when feature enabled.
 
-use criterion::{BenchmarkId, Criterion, criterion_group, criterion_main};
 use clawhdf5_format::chunked_read::read_chunked_data;
 use clawhdf5_format::data_layout::DataLayout;
 use clawhdf5_format::data_read::read_as_f64;
@@ -14,6 +13,7 @@ use clawhdf5_format::message_type::MessageType;
 use clawhdf5_format::object_header::ObjectHeader;
 use clawhdf5_format::signature::find_signature;
 use clawhdf5_format::superblock::Superblock;
+use criterion::{BenchmarkId, Criterion, criterion_group, criterion_main};
 
 fn make_deflate_file(n: usize) -> Vec<u8> {
     let data: Vec<f64> = (0..n).map(|i| (i as f64) * 0.001).collect();

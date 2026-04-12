@@ -26,12 +26,7 @@ impl GpuSearchBackend {
     ///
     /// Returns a backend with GPU active only if hardware is detected,
     /// the `gpu` feature is enabled, and the collection size exceeds the threshold.
-    pub fn try_init(
-        vectors: &[Vec<f32>],
-        norms: &[f32],
-        dim: usize,
-        threshold: usize,
-    ) -> Self {
+    pub fn try_init(vectors: &[Vec<f32>], norms: &[f32], dim: usize, threshold: usize) -> Self {
         #[cfg(feature = "gpu")]
         {
             if vectors.len() >= threshold {
@@ -106,8 +101,7 @@ impl GpuSearchBackend {
             // If we have an accelerator and still above threshold, re-upload
             if let Some(ref mut accel) = self.accelerator {
                 if vectors.len() >= self.threshold {
-                    let flat: Vec<f32> =
-                        vectors.iter().flat_map(|v| v.iter().copied()).collect();
+                    let flat: Vec<f32> = vectors.iter().flat_map(|v| v.iter().copied()).collect();
                     if accel.upload_vectors(&flat, self.dim).is_err()
                         || accel.upload_norms(norms).is_err()
                     {
@@ -123,8 +117,7 @@ impl GpuSearchBackend {
             // If we don't have an accelerator but now above threshold, try init
             if vectors.len() >= self.threshold {
                 if let Ok(mut accel) = clawhdf5_gpu::GpuAccelerator::new() {
-                    let flat: Vec<f32> =
-                        vectors.iter().flat_map(|v| v.iter().copied()).collect();
+                    let flat: Vec<f32> = vectors.iter().flat_map(|v| v.iter().copied()).collect();
                     if accel.upload_vectors(&flat, self.dim).is_ok()
                         && accel.upload_norms(norms).is_ok()
                     {
@@ -157,9 +150,7 @@ impl GpuSearchBackend {
                 match accel.cosine_search(query, k.min(self.num_vectors.max(1))) {
                     Ok(mut results) => {
                         // Filter out tombstoned entries
-                        results.retain(|(i, _)| {
-                            *i < tombstones.len() && tombstones[*i] == 0
-                        });
+                        results.retain(|(i, _)| *i < tombstones.len() && tombstones[*i] == 0);
                         results.truncate(k);
                         return results;
                     }
@@ -186,9 +177,7 @@ impl GpuSearchBackend {
             if let Some(ref accel) = self.accelerator {
                 match accel.l2_search(query, k.min(self.num_vectors.max(1))) {
                     Ok(mut results) => {
-                        results.retain(|(i, _)| {
-                            *i < tombstones.len() && tombstones[*i] == 0
-                        });
+                        results.retain(|(i, _)| *i < tombstones.len() && tombstones[*i] == 0);
                         results.truncate(k);
                         return results;
                     }
@@ -356,8 +345,7 @@ mod tests {
 
         let fallback = cpu_fallback_cosine(&query, &vectors, &norms, &tombstones, 10);
         let backend = GpuSearchBackend::try_init(&vectors, &norms, 64, 50);
-        let backend_results =
-            backend.search_cosine(&query, &vectors, &norms, &tombstones, 10);
+        let backend_results = backend.search_cosine(&query, &vectors, &norms, &tombstones, 10);
 
         assert_eq!(fallback.len(), backend_results.len());
         for (f, b) in fallback.iter().zip(&backend_results) {
