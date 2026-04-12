@@ -40,12 +40,13 @@ mod tests {
         (0..n)
             .map(|i| {
                 let base = i * dim;
-                (0..dim)
+                let sq_sum: f32 = (0..dim)
                     .map(|d| {
                         let diff = query[d] - vectors[base + d];
                         diff * diff
                     })
-                    .sum()
+                    .sum();
+                sq_sum.sqrt()
             })
             .collect()
     }

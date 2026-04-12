@@ -108,6 +108,48 @@ fn full_write_pipeline() {
 }
 
 // ---------------------------------------------------------------------------
+// 2b. max_dimensions / unlimited dimension round-trip
+// ---------------------------------------------------------------------------
+
+#[test]
+fn max_dimensions_unlimited() {
+    let mut b = FileBuilder::new();
+    b.create_dataset("fixed")
+        .with_f64_data(&[1.0, 2.0, 3.0])
+        .with_shape(&[3]);
+    b.create_dataset("unlimited")
+        .with_f64_data(&[10.0, 20.0])
+        .with_shape(&[2])
+        .with_maxshape(&[u64::MAX])
+        .with_chunks(&[1]);
+    b.create_dataset("bounded")
+        .with_f64_data(&[5.0])
+        .with_shape(&[1])
+        .with_maxshape(&[100])
+        .with_chunks(&[1]);
+
+    let bytes = b.finish().unwrap();
+    let file = File::from_bytes(bytes).unwrap();
+
+    // Fixed dataset: no max_dimensions
+    let fixed = file.dataset("fixed").unwrap();
+    assert_eq!(fixed.shape().unwrap(), vec![3]);
+    assert_eq!(fixed.max_dimensions().unwrap(), None);
+
+    // Unlimited dataset: max_dimensions[0] == u64::MAX
+    let unlimited = file.dataset("unlimited").unwrap();
+    assert_eq!(unlimited.shape().unwrap(), vec![2]);
+    let max_dims = unlimited.max_dimensions().unwrap().unwrap();
+    assert_eq!(max_dims, vec![u64::MAX]);
+
+    // Bounded dataset: max_dimensions[0] == 100
+    let bounded = file.dataset("bounded").unwrap();
+    assert_eq!(bounded.shape().unwrap(), vec![1]);
+    let max_dims = bounded.max_dimensions().unwrap().unwrap();
+    assert_eq!(max_dims, vec![100]);
+}
+
+// ---------------------------------------------------------------------------
 // 3. Round-trip with all supported write/read types
 // ---------------------------------------------------------------------------
 

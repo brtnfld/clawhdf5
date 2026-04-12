@@ -5,7 +5,18 @@
 
 use clawhdf5_format::file_writer::{AttrValue, CompoundTypeBuilder, EnumTypeBuilder, FileWriter};
 
+fn h5py_available() -> bool {
+    std::process::Command::new("python3")
+        .args(["-c", "import h5py"])
+        .output()
+        .map(|o| o.status.success())
+        .unwrap_or(false)
+}
+
 fn h5py_read(_path: &std::path::Path, script: &str) -> String {
+    if !h5py_available() {
+        panic!("h5py not installed — skipping interop test");
+    }
     let o = std::process::Command::new("python3")
         .args(["-c", script])
         .output()
@@ -19,6 +30,7 @@ fn h5py_read(_path: &std::path::Path, script: &str) -> String {
 // ---- h5py round-trip: basic datasets ----
 
 #[test]
+#[ignore = "requires Python h5py module"]
 fn h5py_reads_our_f64_dataset() {
     let mut fw = FileWriter::new();
     fw.create_dataset("data")
@@ -37,6 +49,7 @@ fn h5py_reads_our_f64_dataset() {
 }
 
 #[test]
+#[ignore = "requires Python h5py module"]
 fn h5py_reads_our_i32_dataset() {
     let mut fw = FileWriter::new();
     fw.create_dataset("ints").with_i32_data(&[10, 20, 30]);
@@ -53,6 +66,7 @@ fn h5py_reads_our_i32_dataset() {
 }
 
 #[test]
+#[ignore = "requires Python h5py module"]
 fn h5py_reads_dataset_with_attrs() {
     let mut fw = FileWriter::new();
     fw.create_dataset("data")
@@ -72,6 +86,7 @@ fn h5py_reads_dataset_with_attrs() {
 }
 
 #[test]
+#[ignore = "requires Python h5py module"]
 fn h5py_reads_group_with_dataset() {
     let mut fw = FileWriter::new();
     let mut gb = fw.create_group("grp");
@@ -90,6 +105,7 @@ fn h5py_reads_group_with_dataset() {
 }
 
 #[test]
+#[ignore = "requires Python h5py module"]
 fn h5py_reads_root_attrs() {
     let mut fw = FileWriter::new();
     fw.set_root_attr("version", AttrValue::I64(42));
@@ -106,6 +122,7 @@ fn h5py_reads_root_attrs() {
 }
 
 #[test]
+#[ignore = "requires Python h5py module"]
 fn h5py_reads_multiple_datasets() {
     let mut fw = FileWriter::new();
     fw.create_dataset("a").with_f64_data(&[1.0]);
@@ -128,6 +145,7 @@ fn h5py_reads_multiple_datasets() {
 // ---- Compound / Enum / Array h5py round-trips ----
 
 #[test]
+#[ignore = "requires Python h5py module"]
 fn h5py_reads_our_compound_dataset() {
     let ct = CompoundTypeBuilder::new()
         .f64_field("x")
@@ -160,6 +178,7 @@ fn h5py_reads_our_compound_dataset() {
 }
 
 #[test]
+#[ignore = "requires Python h5py module"]
 fn h5py_reads_our_enum_dataset() {
     let et = EnumTypeBuilder::i32_based()
         .value("RED", 0)
@@ -183,6 +202,7 @@ fn h5py_reads_our_enum_dataset() {
 }
 
 #[test]
+#[ignore = "requires Python h5py module"]
 fn h5py_reads_our_array_dataset() {
     let mut raw = Vec::new();
     for v in &[1.0f64, 2.0, 3.0, 4.0, 5.0, 6.0] {
@@ -213,6 +233,7 @@ fn h5py_reads_our_array_dataset() {
 }
 
 #[test]
+#[ignore = "requires Python h5py module"]
 fn read_h5py_generated_compound() {
     let path = std::env::temp_dir().join("clawhdf5_h5py_compound.h5");
     let gen_script = format!(
@@ -272,6 +293,7 @@ f.close()
 }
 
 #[test]
+#[ignore = "requires Python h5py module"]
 fn read_h5py_generated_enum() {
     let path = std::env::temp_dir().join("clawhdf5_h5py_enum.h5");
     let gen_script = format!(
@@ -329,6 +351,7 @@ f.close()
 // ---- h5py chunked round-trip tests ----
 
 #[test]
+#[ignore = "requires Python h5py module"]
 fn h5py_reads_chunked_no_compression() {
     let mut fw = FileWriter::new();
     let data: Vec<f64> = (0..100).map(|i| i as f64).collect();
@@ -351,6 +374,7 @@ fn h5py_reads_chunked_no_compression() {
 }
 
 #[test]
+#[ignore = "requires Python h5py module"]
 fn h5py_reads_chunked_deflate() {
     let mut fw = FileWriter::new();
     let data: Vec<f64> = (0..100).map(|i| i as f64).collect();
@@ -374,6 +398,7 @@ fn h5py_reads_chunked_deflate() {
 }
 
 #[test]
+#[ignore = "requires Python h5py module"]
 fn h5py_reads_chunked_shuffle_deflate() {
     let mut fw = FileWriter::new();
     let data: Vec<f64> = (0..100).map(|i| i as f64).collect();
@@ -399,6 +424,7 @@ fn h5py_reads_chunked_shuffle_deflate() {
 }
 
 #[test]
+#[ignore = "requires Python h5py module"]
 fn h5py_reads_chunked_fletcher32() {
     let mut fw = FileWriter::new();
     let data: Vec<f64> = (0..100).map(|i| i as f64).collect();
@@ -422,6 +448,7 @@ fn h5py_reads_chunked_fletcher32() {
 }
 
 #[test]
+#[ignore = "requires Python h5py module"]
 fn h5py_reads_chunked_2d() {
     let mut fw = FileWriter::new();
     let data: Vec<f64> = (0..24).map(|i| i as f64).collect();
@@ -445,6 +472,7 @@ fn h5py_reads_chunked_2d() {
 }
 
 #[test]
+#[ignore = "requires Python h5py module"]
 fn h5py_reads_2d_data() {
     let mut fw = FileWriter::new();
     fw.create_dataset("matrix")
@@ -466,6 +494,7 @@ fn h5py_reads_2d_data() {
 // ---- Extensible Array / resizable dataset h5py tests ----
 
 #[test]
+#[ignore = "requires Python h5py module"]
 fn h5py_reads_resizable_dataset() {
     let mut fw = FileWriter::new();
     let data: Vec<f64> = (0..50).map(|i| i as f64).collect();
@@ -489,6 +518,7 @@ fn h5py_reads_resizable_dataset() {
 }
 
 #[test]
+#[ignore = "requires Python h5py module"]
 fn read_h5py_generated_ea_file() {
     let path = std::env::temp_dir().join("clawhdf5_h5py_ea.h5");
     let gen_script = format!(
@@ -557,6 +587,7 @@ fn read_h5py_generated_ea_file() {
 }
 
 #[test]
+#[ignore = "requires Python h5py module"]
 fn h5py_append_and_verify() {
     let mut fw = FileWriter::new();
     let initial: Vec<f64> = (0..10).map(|i| i as f64).collect();
@@ -599,6 +630,7 @@ print(json.dumps({{'values': result, 'shape': shape}}))
 }
 
 #[test]
+#[ignore = "requires Python h5py module"]
 fn h5py_reads_resizable_single_chunk() {
     let mut fw = FileWriter::new();
     let data: Vec<f64> = (0..5).map(|i| i as f64).collect();
@@ -622,6 +654,7 @@ fn h5py_reads_resizable_single_chunk() {
 // ---- Dense attribute h5py round-trip ----
 
 #[test]
+#[ignore = "requires Python h5py module"]
 fn h5py_reads_dense_attrs() {
     let mut fw = FileWriter::new();
     let ds = fw.create_dataset("data");
@@ -655,6 +688,7 @@ print(json.dumps({{'data': data, 'num_attrs': len(attrs), 'attr_000': attrs.get(
 }
 
 #[test]
+#[ignore = "requires Python h5py module"]
 fn h5py_reads_50_dense_attrs() {
     let mut fw = FileWriter::new();
     let ds = fw.create_dataset("data");
@@ -687,6 +721,7 @@ print(json.dumps({{'num_attrs': len(attrs), 'first': attrs.get('attr_000'), 'las
 // ---- SHINES provenance h5py round-trips ----
 
 #[test]
+#[ignore = "requires Python h5py module"]
 fn h5py_reads_provenance_attrs() {
     let mut fw = FileWriter::new();
     let ds = fw.create_dataset("sensor");
@@ -739,6 +774,7 @@ print(json.dumps({{'data': data, 'sha256': sha, 'expected_sha256': expected, 'cr
 }
 
 #[test]
+#[ignore = "requires Python h5py module"]
 fn h5py_reads_provenance_no_source() {
     let mut fw = FileWriter::new();
     let ds = fw.create_dataset("data");

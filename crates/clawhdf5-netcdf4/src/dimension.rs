@@ -105,56 +105,17 @@ fn get_dimid(attrs: &HashMap<String, AttrValue>) -> Option<i64> {
 
 /// Check if a dimension is unlimited by inspecting the HDF5 dataspace max_dimensions.
 ///
-/// We use the low-level format API to access the dataspace's max_dimensions field,
-/// which is not exposed by the high-level clawhdf5 Dataset API.
-///
-/// # Known limitation
-///
-/// TODO: This function currently always returns `false` because the high-level
-/// `Dataset` API does not expose `max_dimensions` from the dataspace, and the
-/// low-level fallback in `check_unlimited_low_level` is not yet implemented.
-/// Unlimited dimension detection requires parsing the object header directly
-/// to read the dataspace message's max_dimensions field.
-fn check_unlimited(file: &clawhdf5::File, group: &clawhdf5::Group<'_>, ds_name: &str) -> bool {
-    // We need to go through the low-level API to check max_dimensions.
-    // Build the path and resolve it.
-    let sb = file.superblock();
-    let data = file.as_bytes();
-
-    // Try to resolve the dataset path within this group
-    // We'll try the dataset name directly from the group's children
+/// A dimension is unlimited when `max_dimensions[0] == u64::MAX` in the HDF5 dataspace.
+fn check_unlimited(_file: &clawhdf5::File, group: &clawhdf5::Group<'_>, ds_name: &str) -> bool {
     let ds = match group.dataset(ds_name) {
         Ok(ds) => ds,
         Err(_) => return false,
     };
 
-    // Access the shape to get the object header through the low-level API.
-    // We need to parse the dataspace message to check max_dimensions.
-    // The high-level API only gives us shape(), not max_dimensions.
-    // We'll use the dataset's header directly via format-level parsing.
-    let _ = (sb, data);
-
-    // Use a heuristic: if the dataset has chunked storage, check its attributes
-    // for _Netcdf4Dimid and shape. NetCDF-4 files created by standard tools
-    // always use chunked storage for unlimited dimensions.
-    // We can also check via the low-level format API.
-    check_unlimited_low_level(file, ds_name, &ds)
-}
-
-// TODO: Implement unlimited dimension detection by resolving the dataset path
-// at the format level, parsing the object header, and checking whether
-// dataspace.max_dimensions[0] == u64::MAX. This requires either exposing
-// max_dimensions through the high-level Dataset API or re-resolving the
-// dataset address from the format layer. See check_unlimited() doc comment.
-fn check_unlimited_low_level(
-    file: &clawhdf5::File,
-    _ds_name: &str,
-    _ds: &clawhdf5::Dataset<'_>,
-) -> bool {
-    let data = file.as_bytes();
-    let sb = file.superblock();
-    let _ = (data, sb);
-    false
+    match ds.max_dimensions() {
+        Ok(Some(max_dims)) => max_dims.first().copied() == Some(u64::MAX),
+        _ => false,
+    }
 }
 
 /// Extract dimensions from an HDF5 group using both dimension scale attributes

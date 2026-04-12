@@ -1342,7 +1342,19 @@ mod tests {
     // ---- h5py round-trip tests for chunked writes ----
 
     #[cfg(feature = "std")]
+    fn h5py_available() -> bool {
+        std::process::Command::new("python3")
+            .args(["-c", "import h5py"])
+            .output()
+            .map(|o| o.status.success())
+            .unwrap_or(false)
+    }
+
+    #[cfg(feature = "std")]
     fn h5py_run(script: &str) -> String {
+        if !h5py_available() {
+            panic!("h5py not installed — skipping interop test");
+        }
         let o = std::process::Command::new("python3")
             .args(["-c", script])
             .output()
@@ -1355,6 +1367,7 @@ mod tests {
 
     #[cfg(feature = "std")]
     #[test]
+    #[ignore = "requires Python h5py module"]
     fn h5py_reads_multiple_chunked_datasets() {
         use crate::file_writer::FileWriter;
         let mut fw = FileWriter::new();
@@ -1384,6 +1397,7 @@ mod tests {
 
     #[cfg(feature = "std")]
     #[test]
+    #[ignore = "requires Python h5py module"]
     fn h5py_reads_chunked_with_attrs() {
         use crate::file_writer::{AttrValue, FileWriter};
         let mut fw = FileWriter::new();

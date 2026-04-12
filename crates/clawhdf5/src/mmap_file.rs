@@ -224,6 +224,15 @@ impl<'f> MmapDataset<'f> {
         Ok(ds.dimensions.clone())
     }
 
+    /// Returns the maximum dimension sizes, if present in the dataspace.
+    ///
+    /// A value of `u64::MAX` for a given dimension indicates that it is unlimited
+    /// (extensible). Returns `None` if the dataspace has no max dimensions set.
+    pub fn max_dimensions(&self) -> Result<Option<Vec<u64>>, Error> {
+        let ds = self.dataspace()?;
+        Ok(ds.max_dimensions.clone())
+    }
+
     /// Returns the simplified datatype of the dataset.
     pub fn dtype(&self) -> Result<DType, Error> {
         let dt = self.datatype()?;
