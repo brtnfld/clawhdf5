@@ -532,7 +532,21 @@ impl DatasetBuilder {
         self
     }
 
-    /// Enable shuffle filter (usually combined with deflate).
+    /// Enable zstd compression at `level` (1-22). HDF5 filter ID 32015.
+    /// Implies chunked storage. Requires the `zstd` cargo feature.
+    pub fn with_zstd(&mut self, level: u32) -> &mut Self {
+        self.chunk_options.zstd_level = Some(level);
+        self
+    }
+
+    /// Enable LZ4 compression. HDF5 filter ID 32004. Implies chunked storage.
+    /// Requires the `lz4` cargo feature.
+    pub fn with_lz4(&mut self) -> &mut Self {
+        self.chunk_options.lz4 = true;
+        self
+    }
+
+    /// Enable shuffle filter (usually combined with deflate or zstd).
     pub fn with_shuffle(&mut self) -> &mut Self {
         self.chunk_options.shuffle = true;
         self

@@ -41,6 +41,7 @@ system-zlib = ["flate2/zlib-default"]
 system-zlib-decompress = []
 zlib-rs = ["flate2/zlib-rs"]
 lz4 = ["lz4_flex"]
+zstd = ["dep:zstd"]
 blake3_hash = ["blake3"]
 
 [[bench]]
