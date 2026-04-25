@@ -101,7 +101,7 @@ impl HardwareCapabilities {
 /// Return the name of the active SIMD/acceleration backend.
 pub fn active_backend_name(gpu_active: bool) -> String {
     if gpu_active {
-        return "gpu".to_string();
+        return "gpu".to_owned();
     }
     let backend = clawhdf5_accel::detect_backend();
     format!("{backend:?}").to_lowercase()

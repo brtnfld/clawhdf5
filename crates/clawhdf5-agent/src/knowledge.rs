@@ -1,5 +1,6 @@
 //! Knowledge graph data structures and cache.
 
+use std::cmp::Reverse;
 use std::collections::{HashMap, HashSet, VecDeque};
 
 // ---------------------------------------------------------------------------
@@ -284,7 +285,7 @@ impl KnowledgeCache {
                     .map(|name| (alias.as_str(), name.to_lowercase()))
             })
             .collect();
-        pairs.sort_by(|a, b| b.0.len().cmp(&a.0.len()));
+        pairs.sort_by_key(|b| Reverse(b.0.len()));
 
         let mut result = lower;
         for (alias, name) in &pairs {

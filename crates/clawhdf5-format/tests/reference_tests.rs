@@ -202,8 +202,10 @@ print('ok')
     )
     .unwrap();
 
-    // Find the 'refs' dataset
+    // Find the 'refs' dataset -- handle both v1 (SymbolTable/B-tree) and v2 (Link) groups
     let mut refs_addr = None;
+
+    // Try v2 Link messages first
     for msg in &root_oh.messages {
         if msg.msg_type == clawhdf5_format::message_type::MessageType::Link {
             let link = clawhdf5_format::link_message::LinkMessage::parse(&msg.data, sb.offset_size)
@@ -218,6 +220,33 @@ print('ok')
             }
         }
     }
+
+    // Fall back to v1 SymbolTable (B-tree + local heap) used by default h5py files
+    if refs_addr.is_none() {
+        for msg in &root_oh.messages {
+            if msg.msg_type == clawhdf5_format::message_type::MessageType::SymbolTable {
+                let sym = clawhdf5_format::symbol_table::SymbolTableMessage::parse(
+                    &msg.data,
+                    sb.offset_size,
+                )
+                .unwrap();
+                let entries = clawhdf5_format::group_v1::resolve_v1_group_entries(
+                    &file_data,
+                    &sym,
+                    sb.offset_size,
+                    sb.length_size,
+                )
+                .unwrap();
+                for entry in entries {
+                    if entry.name == "refs" {
+                        refs_addr = Some(entry.object_header_address);
+                        break;
+                    }
+                }
+            }
+        }
+    }
+
     let refs_addr = refs_addr.expect("'refs' dataset link not found");
 
     let ds_oh = clawhdf5_format::object_header::ObjectHeader::parse(
