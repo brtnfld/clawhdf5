@@ -9,6 +9,7 @@
 //!     data = f['dataset_name'][:]
 //! ```
 
+#![deny(unsafe_code)]
 mod attrs;
 mod dataset;
 mod file;

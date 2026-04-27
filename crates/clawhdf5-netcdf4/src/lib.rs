@@ -23,6 +23,7 @@
 //! }
 //! ```
 
+#![deny(unsafe_code)]
 pub mod cf;
 pub mod dimension;
 pub mod error;

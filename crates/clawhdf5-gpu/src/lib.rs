@@ -25,6 +25,7 @@
 //! let results = gpu.cosine_search(&query, 10).unwrap();
 //! ```
 
+#![deny(unsafe_code)]
 pub mod device;
 pub mod error;
 

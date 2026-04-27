@@ -3,6 +3,7 @@
 //! Provides `#[derive(H5Type)]` which generates methods for mapping Rust structs
 //! to HDF5 compound datatypes, including serialization and deserialization.
 
+#![deny(unsafe_code)]
 use proc_macro::TokenStream;
 use quote::quote;
 use syn::{Data, DeriveInput, Fields, Type, parse_macro_input};
