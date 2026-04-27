@@ -4529,7 +4529,7 @@ fn run_arena_bench() -> Vec<(String, Vec<QueryResult>)> {
             entries.push(MemoryEntry {
                 chunk: turn.content.to_string(),
                 embedding: vec![0.0f32; EMBEDDING_DIM],
-                source_channel: "arena".to_string(),
+                source_channel: "arena".to_owned(),
                 timestamp: ts,
                 session_id: session.id.to_string(),
                 tags: String::new(),

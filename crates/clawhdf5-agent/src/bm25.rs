@@ -234,7 +234,7 @@ mod tests {
 
     #[test]
     fn single_document_match() {
-        let docs = vec!["the quick brown fox jumps over the lazy dog".to_string()];
+        let docs = vec!["the quick brown fox jumps over the lazy dog".to_owned()];
         let tombstones = vec![0u8];
         let index = BM25Index::build(&docs, &tombstones);
 
@@ -247,9 +247,9 @@ mod tests {
     #[test]
     fn multi_document_ranking() {
         let docs = vec![
-            "rust programming language systems".to_string(),
-            "rust rust rust is great for systems programming".to_string(),
-            "python is a scripting language".to_string(),
+            "rust programming language systems".to_owned(),
+            "rust rust rust is great for systems programming".to_owned(),
+            "python is a scripting language".to_owned(),
         ];
         let tombstones = vec![0, 0, 0];
         let index = BM25Index::build(&docs, &tombstones);
@@ -266,7 +266,7 @@ mod tests {
 
     #[test]
     fn no_matches_returns_empty() {
-        let docs = vec!["hello world".to_string()];
+        let docs = vec!["hello world".to_owned()];
         let tombstones = vec![0u8];
         let index = BM25Index::build(&docs, &tombstones);
 
@@ -277,8 +277,8 @@ mod tests {
     #[test]
     fn tombstoned_documents_excluded() {
         let docs = vec![
-            "rust programming".to_string(),
-            "rust systems language".to_string(),
+            "rust programming".to_owned(),
+            "rust systems language".to_owned(),
         ];
         let tombstones = vec![0, 1]; // doc 1 tombstoned
 
@@ -291,7 +291,7 @@ mod tests {
 
     #[test]
     fn rebuild_after_changes() {
-        let docs = vec!["hello world".to_string(), "goodbye world".to_string()];
+        let docs = vec!["hello world".to_owned(), "goodbye world".to_owned()];
         let tombstones = vec![0, 0];
         let mut index = BM25Index::build(&docs, &tombstones);
 
@@ -310,7 +310,7 @@ mod tests {
 
     #[test]
     fn empty_query_returns_empty() {
-        let docs = vec!["hello world".to_string()];
+        let docs = vec!["hello world".to_owned()];
         let tombstones = vec![0u8];
         let index = BM25Index::build(&docs, &tombstones);
 
@@ -355,9 +355,9 @@ mod tests {
     #[test]
     fn idf_weights_rare_terms_higher() {
         let docs = vec![
-            "common common common rare".to_string(),
-            "common common common".to_string(),
-            "common common".to_string(),
+            "common common common rare".to_owned(),
+            "common common common".to_owned(),
+            "common common".to_owned(),
         ];
         let tombstones = vec![0, 0, 0];
         let index = BM25Index::build(&docs, &tombstones);
@@ -372,9 +372,9 @@ mod tests {
     #[test]
     fn cached_idf_consistent_with_computed() {
         let docs = vec![
-            "rust programming".to_string(),
-            "rust systems".to_string(),
-            "python scripting".to_string(),
+            "rust programming".to_owned(),
+            "rust systems".to_owned(),
+            "python scripting".to_owned(),
         ];
         let tombstones = vec![0, 0, 0];
         let index = BM25Index::build(&docs, &tombstones);

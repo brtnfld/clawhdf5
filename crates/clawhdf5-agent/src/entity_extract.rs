@@ -1028,8 +1028,8 @@ mod tests {
     fn test_custom_pattern() {
         let mut config = ExtractorConfig::default();
         config.custom_patterns.push((
-            "CRITICAL".to_string(),
-            ExtractedEntityType::Custom("Alert".to_string()),
+            "CRITICAL".to_owned(),
+            ExtractedEntityType::Custom("Alert".to_owned()),
             0.99,
         ));
         let e = EntityExtractor::new(config);
@@ -1037,7 +1037,7 @@ mod tests {
         assert!(
             entities
                 .iter()
-                .any(|x| x.entity_type == ExtractedEntityType::Custom("Alert".to_string()))
+                .any(|x| x.entity_type == ExtractedEntityType::Custom("Alert".to_owned()))
         );
     }
 

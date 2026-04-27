@@ -728,7 +728,7 @@ mod tests {
         let record = MultiModalRecord {
             id: 0,
             primary_modality: Modality::Image,
-            text_content: Some("a cat sitting on a mat".to_string()),
+            text_content: Some("a cat sitting on a mat".to_owned()),
             media_ref: None,
             embeddings: vec![
                 ModalEmbedding::new(Modality::Image, vec![1.0, 0.0, 0.0], "clip-vit-large"),
@@ -792,7 +792,7 @@ mod tests {
     fn record_metadata() {
         let mut store = MultiModalStore::new();
         let mut meta = HashMap::new();
-        meta.insert("source".to_string(), "camera-1".to_string());
+        meta.insert("source".to_owned(), "camera-1".to_owned());
         let record = MultiModalRecord {
             id: 0,
             primary_modality: Modality::Image,

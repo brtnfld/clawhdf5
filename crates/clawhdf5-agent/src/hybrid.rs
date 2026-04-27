@@ -195,10 +195,10 @@ mod tests {
             vec![0.0, 0.0, 1.0], // doc 3: points in z direction
         ];
         let chunks = vec![
-            "rust programming language".to_string(),
-            "python scripting language".to_string(),
-            "rust and python comparison".to_string(),
-            "javascript web development".to_string(),
+            "rust programming language".to_owned(),
+            "python scripting language".to_owned(),
+            "rust and python comparison".to_owned(),
+            "javascript web development".to_owned(),
         ];
         let tombstones = vec![0u8; 4];
         let bm25 = BM25Index::build(&chunks, &tombstones);

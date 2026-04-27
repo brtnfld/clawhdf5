@@ -102,7 +102,7 @@ fn make_entries(n: usize, text_len: usize) -> Vec<MemoryEntry> {
         .map(|i| MemoryEntry {
             chunk: make_text(i, text_len),
             embedding: make_embedding(i),
-            source_channel: "footprint-bench".to_string(),
+            source_channel: "footprint-bench".to_owned(),
             timestamp: 1_000_000.0 + i as f64,
             session_id: format!("sess_{}", i / 50),
             tags: String::new(),
@@ -227,11 +227,11 @@ fn print_table(results: &[FootprintResult], label: &str) {
 
 fn fmt_n(n: usize) -> String {
     match n {
-        100 => "100".to_string(),
-        1_000 => "1K".to_string(),
-        10_000 => "10K".to_string(),
-        50_000 => "50K".to_string(),
-        100_000 => "100K".to_string(),
+        100 => "100".to_owned(),
+        1_000 => "1K".to_owned(),
+        10_000 => "10K".to_owned(),
+        50_000 => "50K".to_owned(),
+        100_000 => "100K".to_owned(),
         _ => n.to_string(),
     }
 }

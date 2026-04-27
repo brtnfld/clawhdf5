@@ -284,7 +284,7 @@ impl KnowledgeCache {
                     .map(|name| (alias.as_str(), name.to_lowercase()))
             })
             .collect();
-        pairs.sort_by(|a, b| b.0.len().cmp(&a.0.len()));
+        pairs.sort_by_key(|b| std::cmp::Reverse(b.0.len()));
 
         let mut result = lower;
         for (alias, name) in &pairs {
@@ -681,7 +681,7 @@ mod tests {
             let entity = cache.get_entity_mut(id).unwrap();
             entity
                 .properties
-                .insert("role".to_string(), "engineer".to_string());
+                .insert("role".to_owned(), "engineer".to_owned());
         }
         let entity = cache.get_entity(id).unwrap();
         assert_eq!(
@@ -779,7 +779,7 @@ mod tests {
     #[test]
     fn test_relation_type_custom() {
         let rt = RelationType::from_label("something_else");
-        assert_eq!(rt, RelationType::Custom("something_else".to_string()));
+        assert_eq!(rt, RelationType::Custom("something_else".to_owned()));
         assert_eq!(rt.as_str(), "something_else");
     }
 
@@ -790,7 +790,7 @@ mod tests {
             RelationType::Causal,
             RelationType::Associative,
             RelationType::Hierarchical,
-            RelationType::Custom("my_type".to_string()),
+            RelationType::Custom("my_type".to_owned()),
         ];
         for v in &variants {
             assert_eq!(RelationType::from_label(v.as_str()), *v);
@@ -1155,7 +1155,7 @@ mod tests {
             let entity = cache.get_entity_mut(id).unwrap();
             entity
                 .properties
-                .insert("occupation".to_string(), "engineer".to_string());
+                .insert("occupation".to_owned(), "engineer".to_owned());
         }
         let ctx = cache.get_entity_context(id);
         assert!(ctx.contains("occupation"));

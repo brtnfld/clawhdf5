@@ -251,19 +251,19 @@ mod tests {
             RerankInput {
                 index: 0,
                 timestamp: 0.0, // very old
-                source_channel: "other".to_string(),
+                source_channel: "other".to_owned(),
                 raw_activation: 0.1,
             },
             RerankInput {
                 index: 1,
                 timestamp: 86_400.0, // one day ago
-                source_channel: "conversation".to_string(),
+                source_channel: "conversation".to_owned(),
                 raw_activation: 0.5,
             },
             RerankInput {
                 index: 2,
                 timestamp: 172_800.0, // "now"
-                source_channel: "user_correction".to_string(),
+                source_channel: "user_correction".to_owned(),
                 raw_activation: 1.0,
             },
         ]
@@ -310,7 +310,7 @@ mod tests {
         let inputs = vec![RerankInput {
             index: 0,
             timestamp: 0.0,
-            source_channel: "other".to_string(),
+            source_channel: "other".to_owned(),
             raw_activation: 0.5,
         }];
         let now = 3600.0_f64; // exactly one half-life later

@@ -1289,7 +1289,7 @@ mod tests {
             size: 20,
             members: vec![
                 CompoundMember {
-                    name: "x".to_string(),
+                    name: "x".to_owned(),
                     byte_offset: 0,
                     datatype: Datatype::FloatingPoint {
                         size: 8,
@@ -1304,7 +1304,7 @@ mod tests {
                     },
                 },
                 CompoundMember {
-                    name: "y".to_string(),
+                    name: "y".to_owned(),
                     byte_offset: 8,
                     datatype: Datatype::FloatingPoint {
                         size: 8,
@@ -1319,7 +1319,7 @@ mod tests {
                     },
                 },
                 CompoundMember {
-                    name: "id".to_string(),
+                    name: "id".to_owned(),
                     byte_offset: 16,
                     datatype: Datatype::FixedPoint {
                         size: 4,
@@ -1349,15 +1349,15 @@ mod tests {
             }),
             members: vec![
                 EnumMember {
-                    name: "RED".to_string(),
+                    name: "RED".to_owned(),
                     value: 0i32.to_le_bytes().to_vec(),
                 },
                 EnumMember {
-                    name: "GREEN".to_string(),
+                    name: "GREEN".to_owned(),
                     value: 1i32.to_le_bytes().to_vec(),
                 },
                 EnumMember {
-                    name: "BLUE".to_string(),
+                    name: "BLUE".to_owned(),
                     value: 2i32.to_le_bytes().to_vec(),
                 },
             ],

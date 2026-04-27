@@ -398,7 +398,7 @@ mod tests {
                     chunk: self.chunks[idx].clone(),
                     index: idx,
                     timestamp: 0.0,
-                    source_channel: "test".to_string(),
+                    source_channel: "test".to_owned(),
                     activation: 1.0,
                 })
                 .collect()
@@ -415,9 +415,9 @@ mod tests {
 
     fn substantive_exchange() -> Exchange {
         Exchange {
-            user_turn: "Tell me about the deployment architecture for our microservices".to_string(),
-            agent_turn: "The deployment uses Kubernetes with three namespaces for staging, QA, and production".to_string(),
-            session_id: "sess-1".to_string(),
+            user_turn: "Tell me about the deployment architecture for our microservices".to_owned(),
+            agent_turn: "The deployment uses Kubernetes with three namespaces for staging, QA, and production".to_owned(),
+            session_id: "sess-1".to_owned(),
             turn_number: 1,
             timestamp: 1000000.0,
             user_embedding: Some(vec![1.0, 0.0, 0.0, 0.0]),
@@ -427,9 +427,9 @@ mod tests {
 
     fn trivial_exchange() -> Exchange {
         Exchange {
-            user_turn: "ok".to_string(),
-            agent_turn: "Got it!".to_string(),
-            session_id: "sess-1".to_string(),
+            user_turn: "ok".to_owned(),
+            agent_turn: "Got it!".to_owned(),
+            session_id: "sess-1".to_owned(),
             turn_number: 2,
             timestamp: 1000001.0,
             user_embedding: Some(vec![0.1, 0.1, 0.0, 0.0]),
@@ -556,9 +556,9 @@ mod tests {
         let store = TestStoreView::new();
 
         let exchange = Exchange {
-            user_turn: "Actually, thats wrong. The answer is 42".to_string(),
-            agent_turn: "You're right, I apologize. The answer is indeed 42.".to_string(),
-            session_id: "sess-1".to_string(),
+            user_turn: "Actually, thats wrong. The answer is 42".to_owned(),
+            agent_turn: "You're right, I apologize. The answer is indeed 42.".to_owned(),
+            session_id: "sess-1".to_owned(),
             turn_number: 3,
             timestamp: 1000002.0,
             user_embedding: Some(vec![0.5, 0.5, 0.0, 0.0]),
@@ -599,9 +599,9 @@ mod tests {
 
         // Correction bypasses shift even with duplicate embedding
         let correction = Exchange {
-            user_turn: "No, thats wrong. The deployment uses ECS not EKS".to_string(),
-            agent_turn: "Corrected: the deployment uses ECS".to_string(),
-            session_id: "sess-1".to_string(),
+            user_turn: "No, thats wrong. The deployment uses ECS not EKS".to_owned(),
+            agent_turn: "Corrected: the deployment uses ECS".to_owned(),
+            session_id: "sess-1".to_owned(),
             turn_number: 4,
             timestamp: 1000003.0,
             user_embedding: Some(vec![1.0, 0.0, 0.0, 0.0]),
@@ -615,8 +615,8 @@ mod tests {
         let non_correction = Exchange {
             user_turn: "Tell me about the deployment architecture for our microservices"
                 .to_string(),
-            agent_turn: "The deployment uses Kubernetes".to_string(),
-            session_id: "sess-1".to_string(),
+            agent_turn: "The deployment uses Kubernetes".to_owned(),
+            session_id: "sess-1".to_owned(),
             turn_number: 5,
             timestamp: 1000004.0,
             user_embedding: Some(vec![1.0, 0.0, 0.0, 0.0]),
@@ -644,7 +644,7 @@ mod tests {
         assert!(matches!(out2.skipped, Some(SkipReason::Duplicate)));
 
         // Custom skip reason
-        let custom = SkipReason::Custom("test reason".to_string());
+        let custom = SkipReason::Custom("test reason".to_owned());
         assert!(matches!(custom, SkipReason::Custom(_)));
 
         // BelowThreshold
@@ -658,9 +658,9 @@ mod tests {
         let output = StrategyOutput {
             entries: Vec::new(),
             entity_updates: vec![EntityUpdate {
-                name: "Alice".to_string(),
-                entity_type: "person".to_string(),
-                aliases: vec!["my friend".to_string()],
+                name: "Alice".to_owned(),
+                entity_type: "person".to_owned(),
+                aliases: vec!["my friend".to_owned()],
             }],
             skipped: None,
         };

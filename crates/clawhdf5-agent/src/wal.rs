@@ -348,9 +348,9 @@ mod tests {
             timestamp: 1234567.89,
             chunk: chunk.to_string(),
             embedding: embedding.to_vec(),
-            source_channel: "test-channel".to_string(),
-            session_id: "sess-001".to_string(),
-            tags: "tag1,tag2".to_string(),
+            source_channel: "test-channel".to_owned(),
+            session_id: "sess-001".to_owned(),
+            tags: "tag1,tag2".to_owned(),
             tombstone_index: None,
         }
     }
@@ -444,9 +444,9 @@ mod tests {
                 timestamp: std::f64::consts::PI,
                 chunk: unicode_chunk.to_string(),
                 embedding: embedding.clone(),
-                source_channel: "channel/with/slashes".to_string(),
-                session_id: "sess-öö-123".to_string(),
-                tags: "α,β,γ".to_string(),
+                source_channel: "channel/with/slashes".to_owned(),
+                session_id: "sess-öö-123".to_owned(),
+                tags: "α,β,γ".to_owned(),
                 tombstone_index: None,
             };
             wal.append_save(&entry).unwrap();
@@ -487,10 +487,10 @@ mod tests {
         MemoryEntry {
             chunk: chunk.to_string(),
             embedding: embedding.to_vec(),
-            source_channel: "test".to_string(),
+            source_channel: "test".to_owned(),
             timestamp: 1000000.0,
-            session_id: "session-1".to_string(),
-            tags: "tag1,tag2".to_string(),
+            session_id: "session-1".to_owned(),
+            tags: "tag1,tag2".to_owned(),
         }
     }
 

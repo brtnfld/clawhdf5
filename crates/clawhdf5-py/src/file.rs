@@ -211,7 +211,7 @@ impl PyFile {
             Some(FileInner::Write(s)) => {
                 format!("<HDF5 File (write, \"{}\")>", s.path.display())
             }
-            None => "<HDF5 File (closed)>".to_string(),
+            None => "<HDF5 File (closed)>".to_owned(),
         }
     }
 

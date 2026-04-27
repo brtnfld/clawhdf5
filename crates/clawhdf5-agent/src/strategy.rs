@@ -101,7 +101,7 @@ impl HardwareCapabilities {
 /// Return the name of the active SIMD/acceleration backend.
 pub fn active_backend_name(gpu_active: bool) -> String {
     if gpu_active {
-        return "gpu".to_string();
+        return "gpu".to_owned();
     }
     let backend = clawhdf5_accel::detect_backend();
     format!("{backend:?}").to_lowercase()
@@ -464,11 +464,11 @@ mod tests {
     #[test]
     fn search_metrics_strategy_name() {
         let metrics = SearchMetrics {
-            strategy: "simd".to_string(),
+            strategy: "simd".to_owned(),
             search_time_us: 100,
             candidates_scanned: 1000,
             rerank_time_us: None,
-            backend: "neon".to_string(),
+            backend: "neon".to_owned(),
         };
         assert_eq!(metrics.strategy, "simd");
         assert_eq!(metrics.candidates_scanned, 1000);

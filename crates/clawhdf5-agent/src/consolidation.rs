@@ -423,7 +423,7 @@ mod tests {
     fn test_add_memory_basic() {
         let mut engine = ConsolidationEngine::new(ConsolidationConfig::default());
         let id = engine.add_memory(
-            "Hello world".to_string(),
+            "Hello world".to_owned(),
             unit_vec(4, 0),
             MemorySource::User,
             1_000_000.0,
@@ -455,7 +455,7 @@ mod tests {
         let emb = unit_vec(4, 0);
         let existing = vec![MemoryRecord {
             id: 0,
-            chunk: "existing".to_string(),
+            chunk: "existing".to_owned(),
             embedding: emb.clone(),
             tier: MemoryTier::Working,
             importance: 0.5,
@@ -543,7 +543,7 @@ mod tests {
     fn test_decay_calculator() {
         let rec = MemoryRecord {
             id: 0,
-            chunk: "test".to_string(),
+            chunk: "test".to_owned(),
             embedding: vec![1.0],
             tier: MemoryTier::Episodic,
             importance: 1.0,
@@ -590,7 +590,7 @@ mod tests {
         // Add 5 records; all have very low importance so none get promoted.
         for i in 0..5_u64 {
             let id = engine.add_memory(
-                "x".to_string(),
+                "x".to_owned(),
                 unit_vec(4, i as usize),
                 MemorySource::User,
                 i as f64,
@@ -626,7 +626,7 @@ mod tests {
         let mut engine = ConsolidationEngine::new(cfg);
 
         let id = engine.add_memory(
-            "important memory".to_string(),
+            "important memory".to_owned(),
             unit_vec(4, 0),
             MemorySource::Correction,
             0.0,
@@ -659,7 +659,7 @@ mod tests {
         let mut engine = ConsolidationEngine::new(cfg);
 
         let id = engine.add_memory(
-            "frequently accessed".to_string(),
+            "frequently accessed".to_owned(),
             unit_vec(4, 0),
             MemorySource::User,
             0.0,
@@ -689,7 +689,7 @@ mod tests {
     #[test]
     fn test_access_memory_reactivation() {
         let mut engine = ConsolidationEngine::new(ConsolidationConfig::default());
-        let id = engine.add_memory("chunk".to_string(), unit_vec(4, 0), MemorySource::User, 0.0);
+        let id = engine.add_memory("chunk".to_owned(), unit_vec(4, 0), MemorySource::User, 0.0);
 
         engine.access_memory(id, 5000.0);
         let rec = engine.get_by_id(id).unwrap();
@@ -710,11 +710,11 @@ mod tests {
         let mut engine = ConsolidationEngine::new(ConsolidationConfig::default());
 
         // 2 Working
-        engine.add_memory("w1".to_string(), unit_vec(4, 0), MemorySource::User, 0.0);
-        engine.add_memory("w2".to_string(), unit_vec(4, 1), MemorySource::User, 0.0);
+        engine.add_memory("w1".to_owned(), unit_vec(4, 0), MemorySource::User, 0.0);
+        engine.add_memory("w2".to_owned(), unit_vec(4, 1), MemorySource::User, 0.0);
 
         // 1 Episodic (manually set)
-        let id_e = engine.add_memory("e1".to_string(), unit_vec(4, 2), MemorySource::User, 0.0);
+        let id_e = engine.add_memory("e1".to_owned(), unit_vec(4, 2), MemorySource::User, 0.0);
         engine
             .records
             .iter_mut()
@@ -723,7 +723,7 @@ mod tests {
             .tier = MemoryTier::Episodic;
 
         // 1 Semantic (manually set)
-        let id_s = engine.add_memory("s1".to_string(), unit_vec(4, 3), MemorySource::User, 0.0);
+        let id_s = engine.add_memory("s1".to_owned(), unit_vec(4, 3), MemorySource::User, 0.0);
         engine
             .records
             .iter_mut()
@@ -750,7 +750,7 @@ mod tests {
         // Seed 5 records directly in Episodic.
         for i in 0..5_u64 {
             let id = engine.add_memory(
-                "episodic chunk".to_string(),
+                "episodic chunk".to_owned(),
                 unit_vec(4, i as usize),
                 MemorySource::User,
                 i as f64,

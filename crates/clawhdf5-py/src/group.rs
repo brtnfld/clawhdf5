@@ -191,7 +191,7 @@ impl PyGroup {
         match &self.inner {
             GroupInner::Read { path, .. } => {
                 if path.is_empty() {
-                    "<HDF5 Group \"/\" (root)>".to_string()
+                    "<HDF5 Group \"/\" (root)>".to_owned()
                 } else {
                     format!("<HDF5 Group \"/{path}\">")
                 }

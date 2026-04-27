@@ -432,7 +432,7 @@ mod tests {
 
         let fp = FilterPipeline::parse(&buf).unwrap();
         assert_eq!(fp.filters[0].filter_id, 300);
-        assert_eq!(fp.filters[0].name, Some("myfilter".to_string()));
+        assert_eq!(fp.filters[0].name, Some("myfilter".to_owned()));
         assert_eq!(fp.filters[0].client_data, vec![42, 99]);
     }
 
@@ -449,7 +449,7 @@ mod tests {
 
         let fp = FilterPipeline::parse(&buf).unwrap();
         assert_eq!(fp.filters[0].filter_id, 300);
-        assert_eq!(fp.filters[0].name, Some("custom".to_string()));
+        assert_eq!(fp.filters[0].name, Some("custom".to_owned()));
     }
 
     #[test]

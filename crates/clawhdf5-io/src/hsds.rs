@@ -316,32 +316,32 @@ pub fn map_hsds_type(type_info: &TypeInfo) -> String {
         "H5T_FLOAT" => {
             if let Some(base) = &type_info.base {
                 match base.as_str() {
-                    "H5T_IEEE_F32LE" | "H5T_IEEE_F32BE" => "f32".to_string(),
-                    "H5T_IEEE_F64LE" | "H5T_IEEE_F64BE" => "f64".to_string(),
+                    "H5T_IEEE_F32LE" | "H5T_IEEE_F32BE" => "f32".to_owned(),
+                    "H5T_IEEE_F64LE" | "H5T_IEEE_F64BE" => "f64".to_owned(),
                     other => format!("float({other})"),
                 }
             } else {
-                "f64".to_string()
+                "f64".to_owned()
             }
         }
         "H5T_INTEGER" => {
             if let Some(base) = &type_info.base {
                 match base.as_str() {
-                    "H5T_STD_I8LE" | "H5T_STD_I8BE" => "i8".to_string(),
-                    "H5T_STD_I16LE" | "H5T_STD_I16BE" => "i16".to_string(),
-                    "H5T_STD_I32LE" | "H5T_STD_I32BE" => "i32".to_string(),
-                    "H5T_STD_I64LE" | "H5T_STD_I64BE" => "i64".to_string(),
-                    "H5T_STD_U8LE" | "H5T_STD_U8BE" => "u8".to_string(),
-                    "H5T_STD_U16LE" | "H5T_STD_U16BE" => "u16".to_string(),
-                    "H5T_STD_U32LE" | "H5T_STD_U32BE" => "u32".to_string(),
-                    "H5T_STD_U64LE" | "H5T_STD_U64BE" => "u64".to_string(),
+                    "H5T_STD_I8LE" | "H5T_STD_I8BE" => "i8".to_owned(),
+                    "H5T_STD_I16LE" | "H5T_STD_I16BE" => "i16".to_owned(),
+                    "H5T_STD_I32LE" | "H5T_STD_I32BE" => "i32".to_owned(),
+                    "H5T_STD_I64LE" | "H5T_STD_I64BE" => "i64".to_owned(),
+                    "H5T_STD_U8LE" | "H5T_STD_U8BE" => "u8".to_owned(),
+                    "H5T_STD_U16LE" | "H5T_STD_U16BE" => "u16".to_owned(),
+                    "H5T_STD_U32LE" | "H5T_STD_U32BE" => "u32".to_owned(),
+                    "H5T_STD_U64LE" | "H5T_STD_U64BE" => "u64".to_owned(),
                     other => format!("int({other})"),
                 }
             } else {
-                "i64".to_string()
+                "i64".to_owned()
             }
         }
-        "H5T_STRING" => "string".to_string(),
+        "H5T_STRING" => "string".to_owned(),
         other => other.to_string(),
     }
 }
@@ -415,8 +415,8 @@ mod tests {
     #[test]
     fn map_type_f64() {
         let info = TypeInfo {
-            class: "H5T_FLOAT".to_string(),
-            base: Some("H5T_IEEE_F64LE".to_string()),
+            class: "H5T_FLOAT".to_owned(),
+            base: Some("H5T_IEEE_F64LE".to_owned()),
         };
         assert_eq!(map_hsds_type(&info), "f64");
     }
@@ -424,8 +424,8 @@ mod tests {
     #[test]
     fn map_type_f32() {
         let info = TypeInfo {
-            class: "H5T_FLOAT".to_string(),
-            base: Some("H5T_IEEE_F32LE".to_string()),
+            class: "H5T_FLOAT".to_owned(),
+            base: Some("H5T_IEEE_F32LE".to_owned()),
         };
         assert_eq!(map_hsds_type(&info), "f32");
     }
@@ -433,8 +433,8 @@ mod tests {
     #[test]
     fn map_type_i32() {
         let info = TypeInfo {
-            class: "H5T_INTEGER".to_string(),
-            base: Some("H5T_STD_I32LE".to_string()),
+            class: "H5T_INTEGER".to_owned(),
+            base: Some("H5T_STD_I32LE".to_owned()),
         };
         assert_eq!(map_hsds_type(&info), "i32");
     }
@@ -442,8 +442,8 @@ mod tests {
     #[test]
     fn map_type_u64() {
         let info = TypeInfo {
-            class: "H5T_INTEGER".to_string(),
-            base: Some("H5T_STD_U64LE".to_string()),
+            class: "H5T_INTEGER".to_owned(),
+            base: Some("H5T_STD_U64LE".to_owned()),
         };
         assert_eq!(map_hsds_type(&info), "u64");
     }
@@ -451,7 +451,7 @@ mod tests {
     #[test]
     fn map_type_string() {
         let info = TypeInfo {
-            class: "H5T_STRING".to_string(),
+            class: "H5T_STRING".to_owned(),
             base: None,
         };
         assert_eq!(map_hsds_type(&info), "string");
@@ -460,7 +460,7 @@ mod tests {
     #[test]
     fn map_type_unknown() {
         let info = TypeInfo {
-            class: "H5T_COMPOUND".to_string(),
+            class: "H5T_COMPOUND".to_owned(),
             base: None,
         };
         assert_eq!(map_hsds_type(&info), "H5T_COMPOUND");
@@ -471,7 +471,7 @@ mod tests {
     #[test]
     fn map_shape_simple() {
         let shape = ShapeInfo {
-            class: "H5S_SIMPLE".to_string(),
+            class: "H5S_SIMPLE".to_owned(),
             dims: vec![3, 4],
             maxdims: vec![3, 4],
         };
@@ -481,7 +481,7 @@ mod tests {
     #[test]
     fn map_shape_scalar() {
         let shape = ShapeInfo {
-            class: "H5S_SCALAR".to_string(),
+            class: "H5S_SCALAR".to_owned(),
             dims: vec![],
             maxdims: vec![],
         };
@@ -564,7 +564,7 @@ mod tests {
     fn error_display_server() {
         let err = HsdsError::Server {
             status: 404,
-            message: "Not Found".to_string(),
+            message: "Not Found".to_owned(),
         };
         assert!(err.to_string().contains("404"));
         assert!(err.to_string().contains("Not Found"));
@@ -572,7 +572,7 @@ mod tests {
 
     #[test]
     fn error_display_data() {
-        let err = HsdsError::DataError("bad data".to_string());
+        let err = HsdsError::DataError("bad data".to_owned());
         assert!(err.to_string().contains("bad data"));
     }
 
@@ -606,7 +606,7 @@ mod tests {
         ];
         for (base, expected) in &cases {
             let info = TypeInfo {
-                class: "H5T_INTEGER".to_string(),
+                class: "H5T_INTEGER".to_owned(),
                 base: Some(base.to_string()),
             };
             assert_eq!(map_hsds_type(&info), *expected);
@@ -616,7 +616,7 @@ mod tests {
     #[test]
     fn map_float_default_no_base() {
         let info = TypeInfo {
-            class: "H5T_FLOAT".to_string(),
+            class: "H5T_FLOAT".to_owned(),
             base: None,
         };
         assert_eq!(map_hsds_type(&info), "f64");
@@ -625,7 +625,7 @@ mod tests {
     #[test]
     fn map_integer_default_no_base() {
         let info = TypeInfo {
-            class: "H5T_INTEGER".to_string(),
+            class: "H5T_INTEGER".to_owned(),
             base: None,
         };
         assert_eq!(map_hsds_type(&info), "i64");

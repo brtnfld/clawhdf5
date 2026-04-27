@@ -223,7 +223,7 @@ impl DecisionGate {
 
         // Empty check
         if normalized.is_empty() {
-            return Some("empty input".to_string());
+            return Some("empty input".to_owned());
         }
 
         // Layer 1: Exact phrase match (O(1))
@@ -341,7 +341,7 @@ mod tests {
     #[test]
     fn test_custom_trivial_phrases() {
         let config = GateConfig {
-            custom_trivial: vec!["roger that".to_string()],
+            custom_trivial: vec!["roger that".to_owned()],
             ..GateConfig::default()
         };
         let gate = DecisionGate::new(config);

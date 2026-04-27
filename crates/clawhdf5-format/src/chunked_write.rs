@@ -1406,7 +1406,7 @@ mod tests {
             .with_f64_data(&data)
             .with_shape(&[50])
             .with_chunks(&[25])
-            .set_attr("units", AttrValue::String("meters".to_string()));
+            .set_attr("units", AttrValue::String("meters".to_owned()));
         let bytes = fw.finish().unwrap();
         let path = std::env::temp_dir().join("clawhdf5_chunked_attrs.h5");
         std::fs::write(&path, &bytes).unwrap();

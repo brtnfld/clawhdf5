@@ -393,7 +393,7 @@ fn make_bench_entry(idx: usize, dim: usize) -> MemoryEntry {
     MemoryEntry {
         chunk: make_text(&mut rng, 30),
         embedding: make_vec(&mut rng, dim),
-        source_channel: "footprint-bench".to_string(),
+        source_channel: "footprint-bench".to_owned(),
         timestamp: 1_000_000.0 + idx as f64,
         session_id: format!("sess_{}", idx / 50),
         tags: String::new(),

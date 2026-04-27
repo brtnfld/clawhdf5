@@ -611,8 +611,8 @@ impl MemoryBackend for ClawhdfBackend {
             embedding: Vec::new(), // embedding supplied externally
             source_channel: path.to_string(),
             timestamp: now,
-            session_id: "openclaw".to_string(),
-            tags: "openclaw,write".to_string(),
+            session_id: "openclaw".to_owned(),
+            tags: "openclaw,write".to_owned(),
         };
         self.memory.save(entry).map_err(|e| e.to_string())?;
         self.path_map
@@ -641,7 +641,7 @@ impl MemoryBackend for ClawhdfBackend {
                 embedding: Vec::new(),
                 source_channel: source_channel.clone(),
                 timestamp: now,
-                session_id: "openclaw".to_string(),
+                session_id: "openclaw".to_owned(),
                 tags: format!("openclaw,markdown,section-{i}"),
             };
 
@@ -705,7 +705,7 @@ impl MemoryBackend for ClawhdfBackend {
             .unwrap_or(0);
 
         let modalities = if total_records > 0 {
-            vec!["text".to_string()]
+            vec!["text".to_owned()]
         } else {
             Vec::new()
         };
@@ -867,15 +867,15 @@ mod tests {
     fn make_sections() -> Vec<MarkdownSection> {
         vec![
             MarkdownSection {
-                heading: Some("Section A".to_string()),
-                content: "Content A.".to_string(),
+                heading: Some("Section A".to_owned()),
+                content: "Content A.".to_owned(),
                 line_start: 0,
                 line_end: 2,
                 level: 2,
             },
             MarkdownSection {
-                heading: Some("Section B".to_string()),
-                content: "Content B.".to_string(),
+                heading: Some("Section B".to_owned()),
+                content: "Content B.".to_owned(),
                 line_start: 3,
                 line_end: 5,
                 level: 2,
@@ -903,7 +903,7 @@ mod tests {
     fn export_sections_preamble_no_heading_line() {
         let sections = vec![MarkdownSection {
             heading: None,
-            content: "Preamble text.".to_string(),
+            content: "Preamble text.".to_owned(),
             line_start: 0,
             line_end: 1,
             level: 0,
@@ -919,8 +919,8 @@ mod tests {
     #[test]
     fn export_sections_level_respected() {
         let sections = vec![MarkdownSection {
-            heading: Some("Deep".to_string()),
-            content: "x".to_string(),
+            heading: Some("Deep".to_owned()),
+            content: "x".to_owned(),
             line_start: 0,
             line_end: 0,
             level: 3,
@@ -1045,7 +1045,7 @@ mod tests {
         let stats = backend.stats();
         assert_eq!(stats.total_records, 2);
         assert_eq!(stats.total_embeddings, 0, "no embeddings provided");
-        assert!(stats.modalities.contains(&"text".to_string()));
+        assert!(stats.modalities.contains(&"text".to_owned()));
         assert!(stats.last_updated.is_some());
         assert!(stats.file_size_bytes > 0);
     }
@@ -1302,8 +1302,8 @@ mod tests {
     fn markdown_exporter_level_zero_uses_level_one() {
         // level=0 sections should clamp to # when exported with a heading.
         let sections = vec![MarkdownSection {
-            heading: Some("Title".to_string()),
-            content: "body".to_string(),
+            heading: Some("Title".to_owned()),
+            content: "body".to_owned(),
             line_start: 0,
             line_end: 1,
             level: 0,
@@ -1338,7 +1338,7 @@ impl ClawhdfBackend {
                 s.set_text(key, value, ttl_secs);
                 Ok(())
             }
-            None => Err("ephemeral tier not enabled".to_string()),
+            None => Err("ephemeral tier not enabled".to_owned()),
         }
     }
 

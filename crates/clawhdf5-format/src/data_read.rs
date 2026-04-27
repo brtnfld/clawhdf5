@@ -1601,12 +1601,12 @@ mod tests {
             size: 12,
             members: vec![
                 CompoundMember {
-                    name: "x".to_string(),
+                    name: "x".to_owned(),
                     byte_offset: 0,
                     datatype: make_f64_le_type(),
                 },
                 CompoundMember {
-                    name: "id".to_string(),
+                    name: "id".to_owned(),
                     byte_offset: 8,
                     datatype: make_i32_le_type(),
                 },
@@ -1637,12 +1637,12 @@ mod tests {
             size: 12,
             members: vec![
                 CompoundMember {
-                    name: "x".to_string(),
+                    name: "x".to_owned(),
                     byte_offset: 0,
                     datatype: make_f64_le_type(),
                 },
                 CompoundMember {
-                    name: "id".to_string(),
+                    name: "id".to_owned(),
                     byte_offset: 8,
                     datatype: make_i32_le_type(),
                 },
@@ -1669,15 +1669,15 @@ mod tests {
             base_type: Box::new(make_i32_le_type()),
             members: vec![
                 EnumMember {
-                    name: "RED".to_string(),
+                    name: "RED".to_owned(),
                     value: 0i32.to_le_bytes().to_vec(),
                 },
                 EnumMember {
-                    name: "GREEN".to_string(),
+                    name: "GREEN".to_owned(),
                     value: 1i32.to_le_bytes().to_vec(),
                 },
                 EnumMember {
-                    name: "BLUE".to_string(),
+                    name: "BLUE".to_owned(),
                     value: 2i32.to_le_bytes().to_vec(),
                 },
             ],

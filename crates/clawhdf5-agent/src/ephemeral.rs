@@ -893,8 +893,8 @@ mod tests {
         s.entries.get_mut("rare").unwrap().access_count = 1;
 
         let candidates = s.promotion_candidates(3);
-        assert!(candidates.contains(&"frequent".to_string()));
-        assert!(!candidates.contains(&"rare".to_string()));
+        assert!(candidates.contains(&"frequent".to_owned()));
+        assert!(!candidates.contains(&"rare".to_owned()));
     }
 
     #[test]
@@ -971,9 +971,9 @@ mod tests {
         s.entries.insert("dead".into(), dead);
 
         let ks = s.keys();
-        assert!(ks.contains(&"live1".to_string()));
-        assert!(ks.contains(&"live2".to_string()));
-        assert!(!ks.contains(&"dead".to_string()));
+        assert!(ks.contains(&"live1".to_owned()));
+        assert!(ks.contains(&"live2".to_owned()));
+        assert!(!ks.contains(&"dead".to_owned()));
     }
 
     #[test]

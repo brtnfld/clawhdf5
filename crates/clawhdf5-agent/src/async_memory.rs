@@ -585,10 +585,10 @@ mod tests {
         MemoryEntry {
             chunk: chunk.to_string(),
             embedding: embedding.to_vec(),
-            source_channel: "test".to_string(),
+            source_channel: "test".to_owned(),
             timestamp: 1000000.0,
-            session_id: "session-1".to_string(),
-            tags: "".to_string(),
+            session_id: "session-1".to_owned(),
+            tags: "".to_owned(),
         }
     }
 

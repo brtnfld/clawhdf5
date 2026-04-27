@@ -39,7 +39,7 @@ pub fn generate(
     let compression = if config.compression {
         format!("gzip({})", config.compression_level)
     } else {
-        "none".to_string()
+        "none".to_owned()
     };
 
     md.push_str("## Memory Store\n");
@@ -65,7 +65,7 @@ pub fn generate(
     let entity_count = knowledge.entities.len();
     let relation_count = knowledge.relations.len();
     let top_entities = if knowledge.entities.is_empty() {
-        "none".to_string()
+        "none".to_owned()
     } else {
         knowledge
             .entities
@@ -104,8 +104,8 @@ mod tests {
     fn test_config(path: PathBuf) -> MemoryConfig {
         MemoryConfig {
             path,
-            agent_id: "test-agent".to_string(),
-            embedder: "openai:text-embedding-3-small".to_string(),
+            agent_id: "test-agent".to_owned(),
+            embedder: "openai:text-embedding-3-small".to_owned(),
             embedding_dim: 384,
             chunk_size: 512,
             overlap: 50,
@@ -115,7 +115,7 @@ mod tests {
             compact_threshold: 0.3,
             hebbian_boost: 0.15,
             decay_factor: 0.98,
-            created_at: "2025-01-01T00:00:00Z".to_string(),
+            created_at: "2025-01-01T00:00:00Z".to_owned(),
             wal_enabled: false,
             wal_max_entries: 500,
         }

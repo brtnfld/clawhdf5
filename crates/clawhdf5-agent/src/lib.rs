@@ -134,7 +134,7 @@ impl MemoryConfig {
         Self {
             path,
             agent_id: agent_id.to_string(),
-            embedder: "openai:text-embedding-3-small".to_string(),
+            embedder: "openai:text-embedding-3-small".to_owned(),
             embedding_dim,
             chunk_size: 512,
             overlap: 50,
@@ -556,10 +556,10 @@ mod tests {
         MemoryEntry {
             chunk: chunk.to_string(),
             embedding: embedding.to_vec(),
-            source_channel: "test".to_string(),
+            source_channel: "test".to_owned(),
             timestamp: 1000000.0,
-            session_id: "session-1".to_string(),
-            tags: "tag1,tag2".to_string(),
+            session_id: "session-1".to_owned(),
+            tags: "tag1,tag2".to_owned(),
         }
     }
 

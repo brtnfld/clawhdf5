@@ -357,10 +357,10 @@ fn run_cycle_time_benchmark() {
         let promotions = stats.total_promotions - stats_before.total_promotions;
 
         let n_label = match n {
-            100 => "100".to_string(),
-            1_000 => "1K".to_string(),
-            10_000 => "10K".to_string(),
-            100_000 => "100K".to_string(),
+            100 => "100".to_owned(),
+            1_000 => "1K".to_owned(),
+            10_000 => "10K".to_owned(),
+            100_000 => "100K".to_owned(),
             _ => n.to_string(),
         };
 

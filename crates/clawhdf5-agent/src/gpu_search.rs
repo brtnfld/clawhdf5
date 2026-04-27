@@ -199,7 +199,7 @@ impl GpuSearchBackend {
                 return accel.device_info().to_string();
             }
         }
-        "none".to_string()
+        "none".to_owned()
     }
 }
 

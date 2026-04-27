@@ -182,7 +182,7 @@ impl QueryExpander {
         if !resolved.eq_ignore_ascii_case(query) {
             results.push(ExpandedQuery {
                 text: resolved,
-                expansion_type: "knowledge_alias".to_string(),
+                expansion_type: "knowledge_alias".to_owned(),
                 weight: 0.85,
             });
         }
@@ -198,7 +198,7 @@ impl QueryExpander {
                     if !expanded.eq_ignore_ascii_case(query) {
                         neighbor_expansions.push(ExpandedQuery {
                             text: expanded,
-                            expansion_type: "knowledge_graph".to_string(),
+                            expansion_type: "knowledge_graph".to_owned(),
                             weight: 0.85,
                         });
                     }
@@ -240,7 +240,7 @@ fn expand_synonyms(query: &str) -> Vec<ExpandedQuery> {
                     if new_query != query {
                         results.push(ExpandedQuery {
                             text: new_query,
-                            expansion_type: "synonym".to_string(),
+                            expansion_type: "synonym".to_owned(),
                             weight: 0.7,
                         });
                     }
@@ -259,7 +259,7 @@ fn expand_acronyms(query: &str) -> Vec<ExpandedQuery> {
         if new_query != query {
             results.push(ExpandedQuery {
                 text: new_query,
-                expansion_type: "acronym".to_string(),
+                expansion_type: "acronym".to_owned(),
                 weight: 0.8,
             });
         }
@@ -277,7 +277,7 @@ fn expand_temporal(query: &str) -> Vec<ExpandedQuery> {
                 if new_query != query {
                     results.push(ExpandedQuery {
                         text: new_query,
-                        expansion_type: "temporal".to_string(),
+                        expansion_type: "temporal".to_owned(),
                         weight: 0.6,
                     });
                 }
@@ -304,7 +304,7 @@ fn expand_morphological(query: &str) -> Vec<ExpandedQuery> {
                     if new_query != query {
                         results.push(ExpandedQuery {
                             text: new_query,
-                            expansion_type: "morphological".to_string(),
+                            expansion_type: "morphological".to_owned(),
                             weight: 0.5,
                         });
                         break 'rule_loop;

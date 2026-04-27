@@ -191,11 +191,11 @@ fn evaluate_question(q: &Question, top_k: usize) -> EvalResult {
             entries.push(MemoryEntry {
                 chunk: turn.content.clone(),
                 embedding: vec![0.0f32; EMBEDDING_DIM],
-                source_channel: "longmemeval".to_string(),
+                source_channel: "longmemeval".to_owned(),
                 timestamp: ts,
                 session_id: sess_id.to_string(),
                 tags: if turn.has_answer {
-                    "has_answer".to_string()
+                    "has_answer".to_owned()
                 } else {
                     String::new()
                 },
@@ -427,7 +427,7 @@ fn print_report(overall: &Metrics, by_type: &HashMap<String, Metrics>) {
 fn main() {
     let json_path = std::env::args()
         .nth(1)
-        .unwrap_or_else(|| "benchmarks/longmemeval/longmemeval_oracle.json".to_string());
+        .unwrap_or_else(|| "benchmarks/longmemeval/longmemeval_oracle.json".to_owned());
 
     eprintln!("Loading: {json_path}");
     let data = std::fs::read_to_string(&json_path)
