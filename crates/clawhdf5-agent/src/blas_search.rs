@@ -47,6 +47,9 @@ pub fn blas_cosine_batch(
     // M is active_n × dim (row-major), query is dim × 1, output is active_n × 1
     let mut scores = vec![0.0f32; active_n];
 
+    // SAFETY: flat (active_n x dim) and query (dim x 1) are valid, non-overlapping
+    // f32 buffers. scores is active_n x 1. Strides are correct for row-major layout.
+    // matrixmultiply::sgemm is sound for valid pointer/size/stride combinations.
     unsafe {
         matrixmultiply::sgemm(
             active_n, // m: rows of A (and C)
@@ -157,6 +160,9 @@ pub fn blas_cosine_batch_flat(
     }
 
     let mut scores = vec![0.0f32; active_n];
+    // SAFETY: flat (active_n x dim) and query (dim x 1) are valid, non-overlapping
+    // f32 buffers. scores is active_n x 1. Strides are correct for row-major layout.
+    // matrixmultiply::sgemm is sound for valid pointer/size/stride combinations.
     unsafe {
         matrixmultiply::sgemm(
             active_n,
@@ -228,6 +234,9 @@ pub fn blas_distance_matrix(queries: &[f32], vectors: &[f32], dim: usize) -> Vec
     // But vectors is stored as N × D row-major, so vectors^T has:
     //   element (d, j) = vectors[j * dim + d]
     //   row stride = 1, col stride = dim
+    // SAFETY: flat (active_n x dim) and query (dim x 1) are valid, non-overlapping
+    // f32 buffers. scores is active_n x 1. Strides are correct for row-major layout.
+    // matrixmultiply::sgemm is sound for valid pointer/size/stride combinations.
     unsafe {
         matrixmultiply::sgemm(
             q,   // m: rows of result

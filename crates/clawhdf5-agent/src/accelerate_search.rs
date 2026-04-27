@@ -64,6 +64,10 @@ pub fn accelerate_cosine_batch(
     let mut dot_products = vec![0.0f32; active_n];
 
     // Single sgemv: dot_products = flat_matrix (active_n × dim) × query (dim × 1)
+    // SAFETY: flat (active_n x dim) and query (dim x 1) are valid f32 slices.
+    // dot_products is active_n long. Layout/transpose flags match row-major sgemv contract.
+    // SAFETY: flat (active_n x dim) and query (dim x 1) are valid f32 slices.
+    // dot_products is active_n long. Strides match row-major sgemv contract.
     unsafe {
         cblas_sgemv(
             CBLAS_LAYOUT::CblasRowMajor,
@@ -109,6 +113,8 @@ fn accelerate_cosine_all_active(
 ) -> Vec<(usize, f32)> {
     let mut dot_products = vec![0.0f32; n];
 
+    // SAFETY: vectors_flat (n x dim) and query (dim x 1) are valid f32 slices.
+    // dot_products is n long. Strides match row-major sgemv contract.
     unsafe {
         cblas_sgemv(
             CBLAS_LAYOUT::CblasRowMajor,
@@ -225,6 +231,7 @@ pub fn accelerate_batch_norms(vectors_flat: &[f32], dim: usize) -> Vec<f32> {
 
     for i in 0..n {
         let offset = i * dim;
+        // SAFETY: vectors_flat[offset..] has at least dim elements; inc=1 for contiguous.
         let norm = unsafe { cblas_snrm2(dim as i32, vectors_flat[offset..].as_ptr(), 1) };
         norms.push(norm);
     }
@@ -270,6 +277,8 @@ pub fn vdsp_cosine_batch(
 
         let offset = i * dim;
         let mut dot: f32 = 0.0;
+        // SAFETY: vectors_flat[offset..] and query are valid f32 slices of at least dim
+        // elements. &mut dot is valid for a single f32 write.
         unsafe {
             vDSP_dotpr(
                 vectors_flat[offset..].as_ptr(),

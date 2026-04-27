@@ -120,6 +120,8 @@ mod sysz {
 
         loop {
             let mut actual_len = out_len;
+            // SAFETY: All pointer arguments are valid for the duration of this call;
+            // input/output slice pointers are non-null, correctly sized, and non-overlapping.
             let ret = unsafe {
                 uncompress(
                     output.as_mut_ptr(),

@@ -87,6 +87,10 @@ mod apple {
         let mut output = vec![0u8; capacity];
         let mut total_written = 0usize;
 
+        // SAFETY: Apple Compression Framework FFI contract:
+        // - std::mem::zeroed() is valid for CompressionStream (C struct, all-zeros valid initial state).
+        // - compression_stream_init/process/destroy follow the framework lifecycle correctly.
+        // - src_ptr/dst_ptr are valid slices kept alive for the duration of the unsafe block.
         unsafe {
             let mut stream = std::mem::zeroed::<CompressionStream>();
             let status =
@@ -149,6 +153,10 @@ mod apple {
         let mut raw_output = vec![0u8; max_size];
         let mut total_written = 0usize;
 
+        // SAFETY: Apple Compression Framework FFI contract:
+        // - std::mem::zeroed() is valid for CompressionStream (C struct, all-zeros valid initial state).
+        // - compression_stream_init/process/destroy follow the framework lifecycle correctly.
+        // - src_ptr/dst_ptr are valid slices kept alive for the duration of the unsafe block.
         unsafe {
             let mut stream = std::mem::zeroed::<CompressionStream>();
             let status =

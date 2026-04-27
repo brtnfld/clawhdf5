@@ -549,6 +549,8 @@ impl<'f> Dataset<'f> {
         })?;
         check_alignment::<f64>(raw.as_ptr())?;
         let count = raw.len() / 8;
+        // SAFETY: zerocopy_raw_validated guarantees correct type and multiple-of-8 bytes;
+        // check_alignment::<f64> ensures 8-byte alignment. f64 is Copy, no invalid bit patterns.
         Ok(unsafe { std::slice::from_raw_parts(raw.as_ptr() as *const f64, count) })
     }
 
@@ -561,6 +563,8 @@ impl<'f> Dataset<'f> {
         })?;
         check_alignment::<f32>(raw.as_ptr())?;
         let count = raw.len() / 4;
+        // SAFETY: zerocopy_raw_validated guarantees correct type and multiple-of-4 bytes;
+        // check_alignment::<f32> ensures 4-byte alignment. f32 is Copy, no invalid bit patterns.
         Ok(unsafe { std::slice::from_raw_parts(raw.as_ptr() as *const f32, count) })
     }
 
@@ -580,6 +584,8 @@ impl<'f> Dataset<'f> {
         })?;
         check_alignment::<i32>(raw.as_ptr())?;
         let count = raw.len() / 4;
+        // SAFETY: zerocopy_raw_validated guarantees correct type and multiple-of-4 bytes;
+        // check_alignment::<i32> ensures 4-byte alignment. i32 is Copy, no invalid bit patterns.
         Ok(unsafe { std::slice::from_raw_parts(raw.as_ptr() as *const i32, count) })
     }
 
@@ -599,6 +605,8 @@ impl<'f> Dataset<'f> {
         })?;
         check_alignment::<i64>(raw.as_ptr())?;
         let count = raw.len() / 8;
+        // SAFETY: zerocopy_raw_validated guarantees correct type and multiple-of-8 bytes;
+        // check_alignment::<i64> ensures 8-byte alignment. i64 is Copy, no invalid bit patterns.
         Ok(unsafe { std::slice::from_raw_parts(raw.as_ptr() as *const i64, count) })
     }
 

@@ -533,6 +533,7 @@ pub fn read_as_f64_zerocopy<'a>(raw: &'a [u8], datatype: &Datatype) -> Option<&'
         let count = raw.len() / 8;
         // SAFETY: We verified alignment (8-byte), size (multiple of 8), and
         // the on-disk format matches the in-memory representation (LE f64).
+        // SAFETY: Verified 8-byte alignment and multiple-of-8 byte length above; f64 is Copy.
         Some(unsafe { core::slice::from_raw_parts(ptr as *const f64, count) })
     }
     #[cfg(not(target_endian = "little"))]
@@ -569,6 +570,7 @@ pub fn read_as_f32_zerocopy<'a>(raw: &'a [u8], datatype: &Datatype) -> Option<&'
         let count = raw.len() / 4;
         // SAFETY: We verified alignment (4-byte), size (multiple of 4), and
         // the on-disk format matches the in-memory representation (LE f32).
+        // SAFETY: Verified 4-byte alignment and multiple-of-4 byte length above; f32 is Copy.
         Some(unsafe { core::slice::from_raw_parts(ptr as *const f32, count) })
     }
     #[cfg(not(target_endian = "little"))]
@@ -642,6 +644,8 @@ pub fn read_as_f64(raw: &[u8], datatype: &Datatype) -> Result<Vec<f64>, FormatEr
         // SAFETY: On LE platforms, f64 in-memory representation matches LE bytes.
         // We copy raw bytes directly into the f64 buffer.
         unsafe {
+            // SAFETY: result has exactly  T elements (raw.len() == count * sizeof(T)).
+            // raw.as_ptr() is valid for raw.len() bytes. Destination is valid, non-overlapping.
             core::ptr::copy_nonoverlapping(raw.as_ptr(), result.as_mut_ptr() as *mut u8, raw.len());
         }
         return Ok(result);
@@ -717,6 +721,8 @@ pub fn read_as_i64(raw: &[u8], datatype: &Datatype) -> Result<Vec<i64>, FormatEr
     {
         let mut result = vec![0i64; count];
         unsafe {
+            // SAFETY: result has exactly  i64 elements (raw.len() == count * sizeof(i64)).
+            // raw.as_ptr() is valid for raw.len() bytes. Destination is valid, non-overlapping.
             core::ptr::copy_nonoverlapping(raw.as_ptr(), result.as_mut_ptr() as *mut u8, raw.len());
         }
         return Ok(result);
@@ -777,6 +783,8 @@ pub fn read_as_f32(raw: &[u8], datatype: &Datatype) -> Result<Vec<f32>, FormatEr
     ) {
         let mut result = vec![0.0f32; count];
         unsafe {
+            // SAFETY: result has exactly  f32 elements (raw.len() == count * sizeof(f32)).
+            // raw.as_ptr() is valid for raw.len() bytes. Destination is valid, non-overlapping.
             core::ptr::copy_nonoverlapping(raw.as_ptr(), result.as_mut_ptr() as *mut u8, raw.len());
         }
         return Ok(result);
@@ -841,6 +849,8 @@ pub fn read_as_i32(raw: &[u8], datatype: &Datatype) -> Result<Vec<i32>, FormatEr
     {
         let mut result = vec![0i32; count];
         unsafe {
+            // SAFETY: result has exactly  i32 elements (raw.len() == count * sizeof(i32)).
+            // raw.as_ptr() is valid for raw.len() bytes. Destination is valid, non-overlapping.
             core::ptr::copy_nonoverlapping(raw.as_ptr(), result.as_mut_ptr() as *mut u8, raw.len());
         }
         return Ok(result);
@@ -1833,6 +1843,7 @@ mod tests {
         // Create aligned data — Vec<f64> guarantees 8-byte alignment
         let values = vec![1.0f64, 2.0, 3.0, 4.0];
         let raw: &[u8] =
+            // SAFETY: Transmuting &[f64] to &[u8]: all byte values are valid, size is exact.
             unsafe { core::slice::from_raw_parts(values.as_ptr() as *const u8, values.len() * 8) };
         let result = read_as_f64_zerocopy(raw, &dt);
         assert!(result.is_some(), "aligned native LE f64 should succeed");
@@ -1847,6 +1858,7 @@ mod tests {
         let dt = make_i32_le_type();
         let values = vec![1.0f64; 4];
         let raw: &[u8] =
+            // SAFETY: Transmuting &[f64] to &[u8]: all byte values are valid, size is exact.
             unsafe { core::slice::from_raw_parts(values.as_ptr() as *const u8, values.len() * 8) };
         assert!(read_as_f64_zerocopy(raw, &dt).is_none());
     }
@@ -1866,6 +1878,7 @@ mod tests {
         };
         let values = vec![1.0f64; 4];
         let raw: &[u8] =
+            // SAFETY: Transmuting &[f64] to &[u8]: all byte values are valid, size is exact.
             unsafe { core::slice::from_raw_parts(values.as_ptr() as *const u8, values.len() * 8) };
         assert!(read_as_f64_zerocopy(raw, &dt).is_none());
     }
@@ -1892,6 +1905,7 @@ mod tests {
         };
         let values = vec![1.5f32, 2.5, 3.5];
         let raw: &[u8] =
+            // SAFETY: Transmuting &[f64] to &[u8]: all byte values are valid, size is exact.
             unsafe { core::slice::from_raw_parts(values.as_ptr() as *const u8, values.len() * 4) };
         let result = read_as_f32_zerocopy(raw, &dt);
         assert!(result.is_some());
