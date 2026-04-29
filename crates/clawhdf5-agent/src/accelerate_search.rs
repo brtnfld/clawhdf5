@@ -64,6 +64,8 @@ pub fn accelerate_cosine_batch(
     let mut dot_products = vec![0.0f32; active_n];
 
     // Single sgemv: dot_products = flat_matrix (active_n × dim) × query (dim × 1)
+    // SAFETY: cblas_sgemv requires valid pointers to f32 slices with the
+    // dimensions declared. Slices are contiguous and have the correct lengths.
     unsafe {
         cblas_sgemv(
             CBLAS_LAYOUT::CblasRowMajor,
@@ -109,6 +111,8 @@ fn accelerate_cosine_all_active(
 ) -> Vec<(usize, f32)> {
     let mut dot_products = vec![0.0f32; n];
 
+    // SAFETY: cblas_sgemv requires valid pointers to f32 slices with the
+    // dimensions declared. Slices are contiguous and have the correct lengths.
     unsafe {
         cblas_sgemv(
             CBLAS_LAYOUT::CblasRowMajor,
@@ -180,6 +184,8 @@ pub fn accelerate_cosine_batch_vecs(
 
     let mut dot_products = vec![0.0f32; active_n];
 
+    // SAFETY: cblas_sgemv requires valid pointers to f32 slices with the
+    // dimensions declared. Slices are contiguous and have the correct lengths.
     unsafe {
         cblas_sgemv(
             CBLAS_LAYOUT::CblasRowMajor,
@@ -225,7 +231,8 @@ pub fn accelerate_batch_norms(vectors_flat: &[f32], dim: usize) -> Vec<f32> {
 
     for i in 0..n {
         let offset = i * dim;
-        let norm = unsafe { cblas_snrm2(dim as i32, vectors_flat[offset..].as_ptr(), 1) };
+        // SAFETY: cblas_snrm2 requires a valid pointer to f32 slice of length dim.
+    let norm = unsafe { cblas_snrm2(dim as i32, vectors_flat[offset..].as_ptr(), 1) };
         norms.push(norm);
     }
 
@@ -270,6 +277,8 @@ pub fn vdsp_cosine_batch(
 
         let offset = i * dim;
         let mut dot: f32 = 0.0;
+        // SAFETY: vDSP_dotpr requires valid f32 pointers with length dim. Offsets are
+        // within the vectors_flat slice bounds.
         unsafe {
             vDSP_dotpr(
                 vectors_flat[offset..].as_ptr(),

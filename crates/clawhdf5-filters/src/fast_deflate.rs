@@ -40,6 +40,8 @@ mod apple {
         state: *mut std::ffi::c_void,
     }
 
+    // SAFETY: Apple Compression Framework symbols are linked via #[link(name="compression")].
+    // Function signatures match the macOS compression.h header.
     #[link(name = "compression")]
     unsafe extern "C" {
         fn compression_stream_init(
@@ -87,6 +89,8 @@ mod apple {
         let mut output = vec![0u8; capacity];
         let mut total_written = 0usize;
 
+        // SAFETY: Calling Apple Compression Framework functions with valid CompressionStream pointers.
+        // All pointers set in stream fields point to valid Rust slices in scope.
         unsafe {
             let mut stream = std::mem::zeroed::<CompressionStream>();
             let status =
@@ -149,6 +153,8 @@ mod apple {
         let mut raw_output = vec![0u8; max_size];
         let mut total_written = 0usize;
 
+        // SAFETY: Calling Apple Compression Framework functions with valid CompressionStream pointers.
+        // All pointers set in stream fields point to valid Rust slices in scope.
         unsafe {
             let mut stream = std::mem::zeroed::<CompressionStream>();
             let status =

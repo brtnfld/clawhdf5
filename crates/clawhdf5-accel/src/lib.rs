@@ -101,12 +101,15 @@ pub fn detect_backend() -> Backend {
 pub fn dot_product(a: &[f32], b: &[f32]) -> f32 {
     match detect_backend() {
         #[cfg(target_arch = "aarch64")]
+        // SAFETY: detect_backend() verified the CPU feature for this variant is available at runtime.
         Backend::Neon => unsafe { neon::dot_product(a, b) },
 
         #[cfg(all(target_arch = "x86_64", feature = "avx512"))]
+        // SAFETY: detect_backend() verified the CPU feature for this variant is available at runtime.
         Backend::Avx512 => unsafe { avx512::dot_product(a, b) },
 
         #[cfg(target_arch = "x86_64")]
+        // SAFETY: detect_backend() verified the CPU feature for this variant is available at runtime.
         Backend::Avx2 => unsafe { avx2::dot_product(a, b) },
 
         _ => scalar::dot_product(a, b),
@@ -122,12 +125,15 @@ pub fn vector_norm(v: &[f32]) -> f32 {
 pub fn cosine_similarity(a: &[f32], b: &[f32]) -> f32 {
     match detect_backend() {
         #[cfg(target_arch = "aarch64")]
+        // SAFETY: detect_backend() verified the CPU feature for this variant is available at runtime.
         Backend::Neon => unsafe { neon::cosine_similarity(a, b) },
 
         #[cfg(all(target_arch = "x86_64", feature = "avx512"))]
+        // SAFETY: detect_backend() verified the CPU feature for this variant is available at runtime.
         Backend::Avx512 => unsafe { avx512::cosine_similarity(a, b) },
 
         #[cfg(target_arch = "x86_64")]
+        // SAFETY: detect_backend() verified the CPU feature for this variant is available at runtime.
         Backend::Avx2 => unsafe { avx2::cosine_similarity(a, b) },
 
         _ => scalar::cosine_similarity(a, b),
@@ -167,12 +173,15 @@ pub fn batch_cosine_prenorm(
 pub fn l2_distance(a: &[f32], b: &[f32]) -> f32 {
     match detect_backend() {
         #[cfg(target_arch = "aarch64")]
+        // SAFETY: detect_backend() verified the CPU feature for this variant is available at runtime.
         Backend::Neon => unsafe { neon::l2_distance(a, b) },
 
         #[cfg(all(target_arch = "x86_64", feature = "avx512"))]
+        // SAFETY: detect_backend() verified the CPU feature for this variant is available at runtime.
         Backend::Avx512 => unsafe { avx512::l2_distance(a, b) },
 
         #[cfg(target_arch = "x86_64")]
+        // SAFETY: detect_backend() verified the CPU feature for this variant is available at runtime.
         Backend::Avx2 => unsafe { avx2::l2_distance(a, b) },
 
         _ => scalar::l2_distance(a, b),

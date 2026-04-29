@@ -11,6 +11,7 @@ use std::arch::x86_64::*;
 /// # Safety
 /// Requires AVX.
 #[inline]
+// SAFETY: Requires AVX2; called only from other unsafe fns that have verified AVX2.
 #[target_feature(enable = "avx2")]
 unsafe fn hsum_256(v: __m256) -> f32 {
     // v = [a0 a1 a2 a3 | a4 a5 a6 a7]
@@ -28,8 +29,10 @@ unsafe fn hsum_256(v: __m256) -> f32 {
 ///
 /// # Safety
 /// Caller must verify is_x86_feature_detected!("avx2") and "fma".
+// SAFETY: Caller must have verified AVX2+FMA via is_x86_feature_detected!.
 #[target_feature(enable = "avx2,fma")]
 pub unsafe fn dot_product(a: &[f32], b: &[f32]) -> f32 {
+    // SAFETY: Caller guarantees AVX2+FMA are available per the # Safety contract.
     unsafe {
         assert_eq!(a.len(), b.len());
         let len = a.len();
@@ -74,8 +77,10 @@ pub unsafe fn dot_product(a: &[f32], b: &[f32]) -> f32 {
 ///
 /// # Safety
 /// Caller must verify is_x86_feature_detected!("avx2") and "fma".
+// SAFETY: Caller must have verified AVX2+FMA via is_x86_feature_detected!.
 #[target_feature(enable = "avx2,fma")]
 pub unsafe fn cosine_similarity(a: &[f32], b: &[f32]) -> f32 {
+    // SAFETY: Caller guarantees AVX2+FMA are available per the # Safety contract.
     unsafe {
         assert_eq!(a.len(), b.len());
         let len = a.len();
@@ -114,8 +119,10 @@ pub unsafe fn cosine_similarity(a: &[f32], b: &[f32]) -> f32 {
 ///
 /// # Safety
 /// Caller must verify is_x86_feature_detected!("avx2") and "fma".
+// SAFETY: Caller must have verified AVX2+FMA via is_x86_feature_detected!.
 #[target_feature(enable = "avx2,fma")]
 pub unsafe fn l2_distance(a: &[f32], b: &[f32]) -> f32 {
+    // SAFETY: Caller guarantees AVX2+FMA are available per the # Safety contract.
     unsafe {
         assert_eq!(a.len(), b.len());
         let len = a.len();
@@ -146,8 +153,10 @@ pub unsafe fn l2_distance(a: &[f32], b: &[f32]) -> f32 {
 ///
 /// # Safety
 /// Caller must verify is_x86_feature_detected!("f16c").
+// SAFETY: Caller must have verified AVX2+F16C via is_x86_feature_detected!.
 #[target_feature(enable = "avx2,f16c")]
 pub unsafe fn f16_to_f32_batch(input: &[u16], output: &mut [f32]) {
+    // SAFETY: Caller guarantees AVX2+F16C are available per the # Safety contract.
     unsafe {
         assert_eq!(input.len(), output.len());
         let len = input.len();

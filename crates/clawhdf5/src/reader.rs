@@ -549,6 +549,7 @@ impl<'f> Dataset<'f> {
         })?;
         check_alignment::<f64>(raw.as_ptr())?;
         let count = raw.len() / 8;
+        // SAFETY: check_alignment verified alignment; count = raw.len()/size_of is within bounds.
         Ok(unsafe { std::slice::from_raw_parts(raw.as_ptr() as *const f64, count) })
     }
 
@@ -561,6 +562,7 @@ impl<'f> Dataset<'f> {
         })?;
         check_alignment::<f32>(raw.as_ptr())?;
         let count = raw.len() / 4;
+        // SAFETY: check_alignment verified alignment; count = raw.len()/size_of is within bounds.
         Ok(unsafe { std::slice::from_raw_parts(raw.as_ptr() as *const f32, count) })
     }
 
@@ -580,6 +582,7 @@ impl<'f> Dataset<'f> {
         })?;
         check_alignment::<i32>(raw.as_ptr())?;
         let count = raw.len() / 4;
+        // SAFETY: check_alignment verified alignment; count = raw.len()/size_of is within bounds.
         Ok(unsafe { std::slice::from_raw_parts(raw.as_ptr() as *const i32, count) })
     }
 
@@ -599,6 +602,7 @@ impl<'f> Dataset<'f> {
         })?;
         check_alignment::<i64>(raw.as_ptr())?;
         let count = raw.len() / 8;
+        // SAFETY: check_alignment verified alignment; count = raw.len()/size_of is within bounds.
         Ok(unsafe { std::slice::from_raw_parts(raw.as_ptr() as *const i64, count) })
     }
 

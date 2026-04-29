@@ -9,6 +9,7 @@ use std::arch::aarch64::*;
 ///
 /// # Safety
 /// Caller must ensure aarch64 target (NEON always available).
+// SAFETY: NEON is always available on aarch64 targets; caller guarantees aarch64.
 #[target_feature(enable = "neon")]
 pub unsafe fn dot_product(a: &[f32], b: &[f32]) -> f32 {
     assert_eq!(a.len(), b.len());
@@ -19,6 +20,7 @@ pub unsafe fn dot_product(a: &[f32], b: &[f32]) -> f32 {
 
     // Process 8 elements per iteration (2x4 unrolled)
     while i + 8 <= len {
+        // SAFETY: Caller guarantees NEON/FP16 available per the # Safety contract on this fn.
         unsafe {
             let va0 = vld1q_f32(a.as_ptr().add(i));
             let vb0 = vld1q_f32(b.as_ptr().add(i));
@@ -33,6 +35,7 @@ pub unsafe fn dot_product(a: &[f32], b: &[f32]) -> f32 {
 
     // Process remaining 4-element chunk
     if i + 4 <= len {
+        // SAFETY: Caller guarantees NEON/FP16 available per the # Safety contract on this fn.
         unsafe {
             let va = vld1q_f32(a.as_ptr().add(i));
             let vb = vld1q_f32(b.as_ptr().add(i));
@@ -56,6 +59,7 @@ pub unsafe fn dot_product(a: &[f32], b: &[f32]) -> f32 {
 ///
 /// # Safety
 /// Caller must ensure aarch64 target.
+// SAFETY: NEON is always available on aarch64 targets; caller guarantees aarch64.
 #[target_feature(enable = "neon")]
 pub unsafe fn cosine_similarity(a: &[f32], b: &[f32]) -> f32 {
     assert_eq!(a.len(), b.len());
@@ -67,6 +71,7 @@ pub unsafe fn cosine_similarity(a: &[f32], b: &[f32]) -> f32 {
     let mut norm_b_acc = vdupq_n_f32(0.0);
 
     while i + 4 <= len {
+        // SAFETY: Caller guarantees NEON/FP16 available per the # Safety contract on this fn.
         unsafe {
             let va = vld1q_f32(a.as_ptr().add(i));
             let vb = vld1q_f32(b.as_ptr().add(i));
@@ -96,6 +101,7 @@ pub unsafe fn cosine_similarity(a: &[f32], b: &[f32]) -> f32 {
 ///
 /// # Safety
 /// Caller must ensure aarch64 target.
+// SAFETY: NEON is always available on aarch64 targets; caller guarantees aarch64.
 #[target_feature(enable = "neon")]
 pub unsafe fn l2_distance(a: &[f32], b: &[f32]) -> f32 {
     assert_eq!(a.len(), b.len());
@@ -104,6 +110,7 @@ pub unsafe fn l2_distance(a: &[f32], b: &[f32]) -> f32 {
     let mut acc = vdupq_n_f32(0.0);
 
     while i + 4 <= len {
+        // SAFETY: Caller guarantees NEON/FP16 available per the # Safety contract on this fn.
         unsafe {
             let va = vld1q_f32(a.as_ptr().add(i));
             let vb = vld1q_f32(b.as_ptr().add(i));

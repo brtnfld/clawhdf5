@@ -11,6 +11,7 @@ use std::arch::x86_64::*;
 ///
 /// # Safety
 /// Caller must verify is_x86_feature_detected!("avx512f").
+// SAFETY: Caller must have verified avx512f via is_x86_feature_detected!.
 #[target_feature(enable = "avx512f")]
 pub unsafe fn dot_product(a: &[f32], b: &[f32]) -> f32 {
     assert_eq!(a.len(), b.len());
@@ -53,6 +54,7 @@ pub unsafe fn dot_product(a: &[f32], b: &[f32]) -> f32 {
 ///
 /// # Safety
 /// Caller must verify is_x86_feature_detected!("avx512f").
+// SAFETY: Caller must have verified avx512f via is_x86_feature_detected!.
 #[target_feature(enable = "avx512f")]
 pub unsafe fn cosine_similarity(a: &[f32], b: &[f32]) -> f32 {
     assert_eq!(a.len(), b.len());
@@ -91,6 +93,7 @@ pub unsafe fn cosine_similarity(a: &[f32], b: &[f32]) -> f32 {
 ///
 /// # Safety
 /// Caller must verify is_x86_feature_detected!("avx512f").
+// SAFETY: Caller must have verified avx512f via is_x86_feature_detected!.
 #[target_feature(enable = "avx512f")]
 pub unsafe fn l2_distance(a: &[f32], b: &[f32]) -> f32 {
     assert_eq!(a.len(), b.len());
