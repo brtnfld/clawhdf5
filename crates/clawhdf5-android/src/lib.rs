@@ -33,10 +33,12 @@ pub unsafe extern "C" fn edgehdf5_create(
     agent_id: *const c_char,
     embedding_dim: u32,
 ) -> Handle {
+    // SAFETY: JNI caller guarantees the pointer argument is a valid null-terminated C string.
     let path = match unsafe { cstr_to_string(path) } {
         Some(s) => s,
         None => return ptr::null_mut(),
     };
+    // SAFETY: JNI caller guarantees the pointer argument is a valid null-terminated C string.
     let agent_id = match unsafe { cstr_to_string(agent_id) } {
         Some(s) => s,
         None => return ptr::null_mut(),
@@ -58,6 +60,7 @@ pub unsafe extern "C" fn edgehdf5_create(
 /// `path` must be a valid, null-terminated C string.
 #[unsafe(no_mangle)]
 pub unsafe extern "C" fn edgehdf5_open(path: *const c_char) -> Handle {
+    // SAFETY: JNI caller guarantees the pointer argument is a valid null-terminated C string.
     let path = match unsafe { cstr_to_string(path) } {
         Some(s) => s,
         None => return ptr::null_mut(),
@@ -78,6 +81,7 @@ pub unsafe extern "C" fn edgehdf5_open(path: *const c_char) -> Handle {
 #[unsafe(no_mangle)]
 pub unsafe extern "C" fn edgehdf5_close(handle: Handle) {
     if !handle.is_null() {
+        // SAFETY: handle was created by Box::into_raw in edgehdf5_create; this is the final use.
         unsafe { drop(Box::from_raw(handle)) };
     }
 }
@@ -104,29 +108,35 @@ pub unsafe extern "C" fn edgehdf5_save(
     session_id: *const c_char,
     tags: *const c_char,
 ) -> i64 {
+    // SAFETY: handle is a valid non-null Handle from edgehdf5_create; caller ensures exclusive access.
     let mem = match unsafe { handle.as_mut() } {
         Some(m) => m,
         None => return -1,
     };
 
+    // SAFETY: JNI caller guarantees the pointer argument is a valid null-terminated C string.
     let chunk = match unsafe { cstr_to_string(chunk) } {
         Some(s) => s,
         None => return -1,
     };
+    // SAFETY: JNI caller guarantees the pointer argument is a valid null-terminated C string.
     let source_channel = match unsafe { cstr_to_string(source_channel) } {
         Some(s) => s,
         None => return -1,
     };
+    // SAFETY: JNI caller guarantees the pointer argument is a valid null-terminated C string.
     let session_id = match unsafe { cstr_to_string(session_id) } {
         Some(s) => s,
         None => return -1,
     };
+    // SAFETY: JNI caller guarantees the pointer argument is a valid null-terminated C string.
     let tags = match unsafe { cstr_to_string(tags) } {
         Some(s) => s,
         None => return -1,
     };
 
     let embedding =
+        // SAFETY: JNI caller guarantees embedding_ptr points to embedding_len valid f32 values.
         unsafe { std::slice::from_raw_parts(embedding_ptr, embedding_len as usize) }.to_vec();
 
     let entry = MemoryEntry {
@@ -151,6 +161,7 @@ pub unsafe extern "C" fn edgehdf5_save(
 /// `handle` must be a valid handle or null (returns 0 if null).
 #[unsafe(no_mangle)]
 pub unsafe extern "C" fn edgehdf5_count_active(handle: Handle) -> u64 {
+    // SAFETY: handle is a valid non-null Handle from edgehdf5_create.
     match unsafe { handle.as_ref() } {
         Some(mem) => mem.count_active() as u64,
         None => 0,
@@ -164,6 +175,7 @@ pub unsafe extern "C" fn edgehdf5_count_active(handle: Handle) -> u64 {
 /// `handle` must be a valid handle or null (returns 0 if null).
 #[unsafe(no_mangle)]
 pub unsafe extern "C" fn edgehdf5_count(handle: Handle) -> u64 {
+    // SAFETY: handle is a valid non-null Handle from edgehdf5_create.
     match unsafe { handle.as_ref() } {
         Some(mem) => mem.count() as u64,
         None => 0,
@@ -177,6 +189,7 @@ pub unsafe extern "C" fn edgehdf5_count(handle: Handle) -> u64 {
 /// `handle` must be a valid, non-null handle.
 #[unsafe(no_mangle)]
 pub unsafe extern "C" fn edgehdf5_delete(handle: Handle, index: u64) -> i32 {
+    // SAFETY: handle is a valid non-null Handle from edgehdf5_create; caller ensures exclusive access.
     let mem = match unsafe { handle.as_mut() } {
         Some(m) => m,
         None => return -1,
@@ -217,15 +230,18 @@ pub unsafe extern "C" fn edgehdf5_hybrid_search(
     out_scores: *mut f32,
     out_chunks: *mut *mut c_char,
 ) -> u32 {
+    // SAFETY: handle is a valid non-null Handle from edgehdf5_create; caller ensures exclusive access.
     let mem = match unsafe { handle.as_mut() } {
         Some(m) => m,
         None => return 0,
     };
+    // SAFETY: JNI caller guarantees the pointer argument is a valid null-terminated C string.
     let query_text = match unsafe { cstr_to_string(query_text) } {
         Some(s) => s,
         None => return 0,
     };
     let query_embedding =
+        // SAFETY: JNI caller guarantees query_embedding_ptr points to query_embedding_len valid f32 values.
         unsafe { std::slice::from_raw_parts(query_embedding_ptr, query_embedding_len as usize) };
 
     let results = mem.hybrid_search(
@@ -238,6 +254,7 @@ pub unsafe extern "C" fn edgehdf5_hybrid_search(
 
     let count = results.len().min(max_results as usize);
     for (i, result) in results.iter().take(count).enumerate() {
+        // SAFETY: The CString result pointers are valid Rust-owned allocations from CString::into_raw.
         unsafe {
             *out_indices.add(i) = result.index as u64;
             *out_scores.add(i) = result.score;
@@ -262,6 +279,7 @@ pub unsafe extern "C" fn edgehdf5_hybrid_search(
 #[unsafe(no_mangle)]
 pub unsafe extern "C" fn edgehdf5_free_string(s: *mut c_char) {
     if !s.is_null() {
+        // SAFETY: s was created by CString::into_raw in this module; this is the final use.
         unsafe { drop(CString::from_raw(s)) };
     }
 }
@@ -285,18 +303,22 @@ pub unsafe extern "C" fn edgehdf5_add_session(
     channel: *const c_char,
     summary: *const c_char,
 ) -> i32 {
+    // SAFETY: handle is a valid non-null Handle from edgehdf5_create; caller ensures exclusive access.
     let mem = match unsafe { handle.as_mut() } {
         Some(m) => m,
         None => return -1,
     };
+    // SAFETY: JNI caller guarantees the pointer argument is a valid null-terminated C string.
     let id = match unsafe { cstr_to_string(id) } {
         Some(s) => s,
         None => return -1,
     };
+    // SAFETY: JNI caller guarantees the pointer argument is a valid null-terminated C string.
     let channel = match unsafe { cstr_to_string(channel) } {
         Some(s) => s,
         None => return -1,
     };
+    // SAFETY: JNI caller guarantees the pointer argument is a valid null-terminated C string.
     let summary = match unsafe { cstr_to_string(summary) } {
         Some(s) => s,
         None => return -1,
@@ -326,10 +348,12 @@ pub unsafe extern "C" fn edgehdf5_get_session_summary(
     handle: Handle,
     session_id: *const c_char,
 ) -> *mut c_char {
+    // SAFETY: handle is a valid non-null Handle from edgehdf5_create.
     let mem = match unsafe { handle.as_ref() } {
         Some(m) => m,
         None => return ptr::null_mut(),
     };
+    // SAFETY: JNI caller guarantees the pointer argument is a valid null-terminated C string.
     let session_id = match unsafe { cstr_to_string(session_id) } {
         Some(s) => s,
         None => return ptr::null_mut(),
@@ -361,14 +385,17 @@ pub unsafe extern "C" fn edgehdf5_add_entity(
     entity_type: *const c_char,
     embedding_idx: i64,
 ) -> i64 {
+    // SAFETY: handle is a valid non-null Handle from edgehdf5_create; caller ensures exclusive access.
     let mem = match unsafe { handle.as_mut() } {
         Some(m) => m,
         None => return -1,
     };
+    // SAFETY: JNI caller guarantees the pointer argument is a valid null-terminated C string.
     let name = match unsafe { cstr_to_string(name) } {
         Some(s) => s,
         None => return -1,
     };
+    // SAFETY: JNI caller guarantees the pointer argument is a valid null-terminated C string.
     let entity_type = match unsafe { cstr_to_string(entity_type) } {
         Some(s) => s,
         None => return -1,
@@ -394,10 +421,12 @@ pub unsafe extern "C" fn edgehdf5_add_relation(
     relation: *const c_char,
     weight: f32,
 ) -> i32 {
+    // SAFETY: handle is a valid non-null Handle from edgehdf5_create; caller ensures exclusive access.
     let mem = match unsafe { handle.as_mut() } {
         Some(m) => m,
         None => return -1,
     };
+    // SAFETY: JNI caller guarantees the pointer argument is a valid null-terminated C string.
     let relation = match unsafe { cstr_to_string(relation) } {
         Some(s) => s,
         None => return -1,
@@ -421,6 +450,7 @@ unsafe fn cstr_to_string(ptr: *const c_char) -> Option<String> {
     if ptr.is_null() {
         return None;
     }
+    // SAFETY: ptr is non-null (checked above) and is a valid null-terminated C string per caller.
     unsafe { CStr::from_ptr(ptr) }
         .to_str()
         .ok()

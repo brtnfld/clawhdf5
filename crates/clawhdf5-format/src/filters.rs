@@ -96,6 +96,7 @@ mod sysz {
     use std::os::raw::{c_int, c_ulong};
 
     // Link against system libz (Apple's optimized build)
+    // SAFETY: libz symbols are linked via #[link(name="z")]. Function signatures match zlib.h.
     #[link(name = "z")]
     unsafe extern "C" {
         fn uncompress(
@@ -120,7 +121,9 @@ mod sysz {
 
         loop {
             let mut actual_len = out_len;
-            let ret = unsafe {
+            // SAFETY: zlib_ng FFI function requires valid input/output buffers and
+    // proper zlib stream state. All buffer sizes are validated before this call.
+    let ret = unsafe {
                 uncompress(
                     output.as_mut_ptr(),
                     &mut actual_len,

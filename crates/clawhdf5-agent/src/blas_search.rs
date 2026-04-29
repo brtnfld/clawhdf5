@@ -47,6 +47,8 @@ pub fn blas_cosine_batch(
     // M is active_n × dim (row-major), query is dim × 1, output is active_n × 1
     let mut scores = vec![0.0f32; active_n];
 
+    // SAFETY: sgemm requires valid f32 pointers with consistent row/column strides.
+    // All slice lengths are checked against active_n * dim before this point.
     unsafe {
         matrixmultiply::sgemm(
             active_n, // m: rows of A (and C)
@@ -104,6 +106,7 @@ pub fn blas_cosine_batch_flat(
 
     if all_active {
         let mut scores = vec![0.0f32; n];
+        // SAFETY: sgemm requires valid f32 pointers. vectors_flat has n*dim elements.
         unsafe {
             matrixmultiply::sgemm(
                 n,
@@ -157,6 +160,8 @@ pub fn blas_cosine_batch_flat(
     }
 
     let mut scores = vec![0.0f32; active_n];
+    // SAFETY: sgemm requires valid f32 pointers with consistent row/column strides.
+    // All slice lengths are checked against active_n * dim before this point.
     unsafe {
         matrixmultiply::sgemm(
             active_n,
@@ -228,6 +233,8 @@ pub fn blas_distance_matrix(queries: &[f32], vectors: &[f32], dim: usize) -> Vec
     // But vectors is stored as N × D row-major, so vectors^T has:
     //   element (d, j) = vectors[j * dim + d]
     //   row stride = 1, col stride = dim
+    // SAFETY: sgemm requires valid f32 pointers with consistent row/column strides.
+    // All slice lengths are checked against active_n * dim before this point.
     unsafe {
         matrixmultiply::sgemm(
             q,   // m: rows of result

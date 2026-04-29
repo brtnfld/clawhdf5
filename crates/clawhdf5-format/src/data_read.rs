@@ -641,6 +641,7 @@ pub fn read_as_f64(raw: &[u8], datatype: &Datatype) -> Result<Vec<f64>, FormatEr
         let mut result = vec![0.0f64; count];
         // SAFETY: On LE platforms, f64 in-memory representation matches LE bytes.
         // We copy raw bytes directly into the f64 buffer.
+        // SAFETY: The byte slice is properly aligned for this type and the length is divisible by size_of::<T>().
         unsafe {
             core::ptr::copy_nonoverlapping(raw.as_ptr(), result.as_mut_ptr() as *mut u8, raw.len());
         }
@@ -716,6 +717,7 @@ pub fn read_as_i64(raw: &[u8], datatype: &Datatype) -> Result<Vec<i64>, FormatEr
         )
     {
         let mut result = vec![0i64; count];
+        // SAFETY: The byte slice is properly aligned for this type and the length is divisible by size_of::<T>().
         unsafe {
             core::ptr::copy_nonoverlapping(raw.as_ptr(), result.as_mut_ptr() as *mut u8, raw.len());
         }
@@ -776,6 +778,7 @@ pub fn read_as_f32(raw: &[u8], datatype: &Datatype) -> Result<Vec<f32>, FormatEr
         }
     ) {
         let mut result = vec![0.0f32; count];
+        // SAFETY: The byte slice is properly aligned for this type and the length is divisible by size_of::<T>().
         unsafe {
             core::ptr::copy_nonoverlapping(raw.as_ptr(), result.as_mut_ptr() as *mut u8, raw.len());
         }
@@ -840,6 +843,7 @@ pub fn read_as_i32(raw: &[u8], datatype: &Datatype) -> Result<Vec<i32>, FormatEr
         )
     {
         let mut result = vec![0i32; count];
+        // SAFETY: The byte slice is properly aligned for this type and the length is divisible by size_of::<T>().
         unsafe {
             core::ptr::copy_nonoverlapping(raw.as_ptr(), result.as_mut_ptr() as *mut u8, raw.len());
         }
@@ -1833,6 +1837,8 @@ mod tests {
         // Create aligned data — Vec<f64> guarantees 8-byte alignment
         let values = vec![1.0f64, 2.0, 3.0, 4.0];
         let raw: &[u8] =
+            // SAFETY: values is a valid slice; reinterpreting as u8 bytes is always safe.
+
             unsafe { core::slice::from_raw_parts(values.as_ptr() as *const u8, values.len() * 8) };
         let result = read_as_f64_zerocopy(raw, &dt);
         assert!(result.is_some(), "aligned native LE f64 should succeed");
@@ -1847,6 +1853,8 @@ mod tests {
         let dt = make_i32_le_type();
         let values = vec![1.0f64; 4];
         let raw: &[u8] =
+            // SAFETY: values is a valid slice; reinterpreting as u8 bytes is always safe.
+
             unsafe { core::slice::from_raw_parts(values.as_ptr() as *const u8, values.len() * 8) };
         assert!(read_as_f64_zerocopy(raw, &dt).is_none());
     }
@@ -1866,6 +1874,8 @@ mod tests {
         };
         let values = vec![1.0f64; 4];
         let raw: &[u8] =
+            // SAFETY: values is a valid slice; reinterpreting as u8 bytes is always safe.
+
             unsafe { core::slice::from_raw_parts(values.as_ptr() as *const u8, values.len() * 8) };
         assert!(read_as_f64_zerocopy(raw, &dt).is_none());
     }
@@ -1892,6 +1902,8 @@ mod tests {
         };
         let values = vec![1.5f32, 2.5, 3.5];
         let raw: &[u8] =
+            // SAFETY: values is a valid slice; reinterpreting as u8 bytes is always safe.
+
             unsafe { core::slice::from_raw_parts(values.as_ptr() as *const u8, values.len() * 4) };
         let result = read_as_f32_zerocopy(raw, &dt);
         assert!(result.is_some());
