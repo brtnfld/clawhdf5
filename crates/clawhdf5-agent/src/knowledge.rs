@@ -197,8 +197,8 @@ impl KnowledgeCache {
         let now = current_ts_us();
         self.entities.push(Entity {
             id,
-            name: name.to_string(),
-            entity_type: entity_type.to_string(),
+            name: name.to_owned(),
+            entity_type: entity_type.to_owned(),
             embedding_idx,
             properties: HashMap::new(),
             embedding: None,
@@ -236,7 +236,7 @@ impl KnowledgeCache {
         self.relations.push(Relation {
             src,
             tgt,
-            relation: relation.to_string(),
+            relation: relation.to_owned(),
             weight,
             ts,
             metadata: HashMap::new(),

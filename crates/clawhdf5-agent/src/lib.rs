@@ -374,13 +374,13 @@ impl HDF5Memory {
                 entry.timestamp,
                 entry.session_id,
             );
-            if self.wal.is_some() {
-                if self.wal.as_ref().unwrap().pending_count() as usize > self.config.wal_max_entries {
-                    self.flush()?;
-                    self.wal.as_mut().unwrap().truncate()?;
-                }
-            } else {
+            let needs_flush = self.wal.as_ref()
+                .is_none_or(|w| w.pending_count() as usize > self.config.wal_max_entries);
+            if needs_flush {
                 self.flush()?;
+                if let Some(ref mut w) = self.wal {
+                    w.truncate()?;
+                }
             }
             return Ok(existing_idx);
         }
@@ -412,14 +412,13 @@ impl AgentMemory for HDF5Memory {
             entry.session_id,
             entry.tags,
         );
-        if self.wal.is_some() {
-            // Check auto-merge threshold
-            if self.wal.as_ref().unwrap().pending_count() as usize > self.config.wal_max_entries {
-                self.flush()?;
-                self.wal.as_mut().unwrap().truncate()?;
-            }
-        } else {
+        let needs_flush = self.wal.as_ref()
+            .is_none_or(|w| w.pending_count() as usize > self.config.wal_max_entries);
+        if needs_flush {
             self.flush()?;
+            if let Some(ref mut w) = self.wal {
+                w.truncate()?;
+            }
         }
         Ok(idx)
     }

@@ -39,7 +39,7 @@ pub fn generate(
     let compression = if config.compression {
         format!("gzip({})", config.compression_level)
     } else {
-        "none".to_string()
+        "none".to_owned()
     };
 
     md.push_str("## Memory Store\n");
@@ -54,7 +54,7 @@ pub fn generate(
 
     // Sessions section
     let session_count = sessions.len();
-    let latest = sessions.latest_session_id().unwrap_or("none").to_string();
+    let latest = sessions.latest_session_id().unwrap_or("none").to_owned();
 
     md.push_str("## Sessions\n");
     md.push_str(&format!("- Total sessions: {session_count}\n"));
@@ -65,7 +65,7 @@ pub fn generate(
     let entity_count = knowledge.entities.len();
     let relation_count = knowledge.relations.len();
     let top_entities = if knowledge.entities.is_empty() {
-        "none".to_string()
+        "none".to_owned()
     } else {
         knowledge
             .entities

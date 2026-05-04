@@ -182,7 +182,7 @@ impl QueryExpander {
         if !resolved.eq_ignore_ascii_case(query) {
             results.push(ExpandedQuery {
                 text: resolved,
-                expansion_type: "knowledge_alias".to_string(),
+                expansion_type: "knowledge_alias".to_owned(),
                 weight: 0.85,
             });
         }
@@ -198,7 +198,7 @@ impl QueryExpander {
                     if !expanded.eq_ignore_ascii_case(query) {
                         neighbor_expansions.push(ExpandedQuery {
                             text: expanded,
-                            expansion_type: "knowledge_graph".to_string(),
+                            expansion_type: "knowledge_graph".to_owned(),
                             weight: 0.85,
                         });
                     }
