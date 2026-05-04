@@ -1,50 +1,26 @@
 # Improvement Scan -- clawhdf5
 
-**Date:** 2026-04-29  
-**Loop:** research-update-quantum  
-**Branch:** research/scan-20260429-181747
+**Date:** 2026-05-03
+**Loop:** research-update-quantum
+**Branch:** research/scan-20260503-180710
 
-## Codebase Status
+## Audit Summary
+- Clippy: Clean (0 warnings)
+- Tests: All passing
+- Files scanned: 83,559 lines across workspace
 
-| Metric | Status |
-|--------|--------|
-| Clippy (strict) | 0 warnings |
-| Tests | All pass |
+## Changes Applied
 
-## Changes Made
+### 1. String literal idiomatic style: .to_string() to .to_owned() (21 replacements)
+- crates/clawhdf5-agent/src/anomaly.rs: 15 replacements in suspicious_patterns vec
+- crates/clawhdf5-agent/src/strategy.rs: 2 replacements in strategy defaults
+- crates/clawhdf5-agent/src/lib.rs: 4 replacements in doc/example code
 
-### Feature: save(MemoryEntry) NAPI Binding (Issue #10)
+**Why:** For str values, .to_owned() is more semantically precise than .to_string().
+Both compile to the same code, but .to_owned() signals intent to clone the string
+rather than invoking the Display trait formatter.
 
-Addresses the user request in issue #10: Node.js callers can now write
-embedding-aware records directly without shelling out to the CLI binary.
-
-**crates/clawhdf5-agent/src/openclaw.rs:**
-- Added `save_entry(entry: MemoryEntry) -> Result<usize, String>` to ClawhdfBackend
-- Added `save_batch_entries(entries: Vec<MemoryEntry>) -> Result<Vec<usize>, String>`
-
-**crates/clawhdf5-napi/src/lib.rs:**
-- Added `MemoryEntryInput` NAPI object type (mirrors MemoryEntry with JS-compatible types)
-- Added `save(entry: MemoryEntryInput) -> napi::Result<u32>` method
-- Added `save_batch(entries: Vec<MemoryEntryInput>) -> napi::Result<Vec<u32>>` method
-
-### Usage Example (Node.js)
-
-```typescript
-const mem = ClawhdfMemory.openOrCreate('./agent.brain', 768);
-
-// Write a single entry with pre-computed embedding
-const idx = mem.save({
-    chunk: 'User prefers dark mode',
-    embedding: Array.from(myEmbeddingModel.encode('dark mode preference')),
-    sourceChannel: 'chat',
-    timestamp: null,   // uses current time
-    sessionId: 'session-abc',
-    tags: 'user,preference',
-});
-
-// Batch write
-const indices = mem.saveBatch([
-    { chunk: 'Memory A', embedding: [...], sourceChannel: 'api', sessionId: 's1', tags: 'api' },
-    { chunk: 'Memory B', embedding: [...], sourceChannel: 'api', sessionId: 's1', tags: 'api' },
-]);
-```
+## Findings Not Changed
+- crates/clawhdf5-migrate/src/main.rs: Multiple .unwrap() calls in test functions -- acceptable
+- crates/clawhdf5-bench/src/bin/memory_arena.rs: 4,699 lines -- candidate for future split
+- crates/clawhdf5-format/src/chunked_read.rs: 2,077 lines -- candidate for future split
