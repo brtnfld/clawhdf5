@@ -374,7 +374,9 @@ impl HDF5Memory {
                 entry.timestamp,
                 entry.session_id,
             );
-            let needs_flush = self.wal.as_ref()
+            let needs_flush = self
+                .wal
+                .as_ref()
                 .is_none_or(|w| w.pending_count() as usize > self.config.wal_max_entries);
             if needs_flush {
                 self.flush()?;
@@ -412,7 +414,9 @@ impl AgentMemory for HDF5Memory {
             entry.session_id,
             entry.tags,
         );
-        let needs_flush = self.wal.as_ref()
+        let needs_flush = self
+            .wal
+            .as_ref()
             .is_none_or(|w| w.pending_count() as usize > self.config.wal_max_entries);
         if needs_flush {
             self.flush()?;
@@ -1292,12 +1296,11 @@ impl HDF5Memory {
         self.strategy = Some(s);
     }
     pub fn record(&mut self, exchange: Exchange) -> Result<StrategyOutput> {
-        let strat = self
-            .strategy
-            .as_ref()
-            .ok_or_else(|| MemoryError::Schema(
+        let strat = self.strategy.as_ref().ok_or_else(|| {
+            MemoryError::Schema(
                 "strategy not initialized: call set_strategy() before record()".to_owned(),
-            ))?;
+            )
+        })?;
         let view = memory_strategy::CacheStoreView::new(&self.cache, &self.knowledge);
         let output = strat.evaluate(&exchange, &view);
         for e in &output.entries {

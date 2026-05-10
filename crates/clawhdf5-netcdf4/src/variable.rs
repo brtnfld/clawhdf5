@@ -61,7 +61,10 @@ impl<'f> Variable<'f> {
         if self.attrs_cache.is_none() {
             self.attrs_cache = Some(self.dataset.attrs()?);
         }
-        Ok(self.attrs_cache.as_ref().expect("invariant: attrs_cache is Some after initialization"))
+        Ok(self
+            .attrs_cache
+            .as_ref()
+            .expect("invariant: attrs_cache is Some after initialization"))
     }
 
     /// Extract CF convention attributes.
