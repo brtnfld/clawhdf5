@@ -122,8 +122,8 @@ mod sysz {
         loop {
             let mut actual_len = out_len;
             // SAFETY: zlib_ng FFI function requires valid input/output buffers and
-    // proper zlib stream state. All buffer sizes are validated before this call.
-    let ret = unsafe {
+            // proper zlib stream state. All buffer sizes are validated before this call.
+            let ret = unsafe {
                 uncompress(
                     output.as_mut_ptr(),
                     &mut actual_len,
