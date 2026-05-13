@@ -517,10 +517,7 @@ impl ClawhdfBackend {
     /// Store a batch of [] records atomically.
     ///
     /// Returns one record index per input entry in the same order.
-    pub fn save_batch_entries(
-        &mut self,
-        entries: Vec<MemoryEntry>,
-    ) -> Result<Vec<usize>, String> {
+    pub fn save_batch_entries(&mut self, entries: Vec<MemoryEntry>) -> Result<Vec<usize>, String> {
         AgentMemory::save_batch(&mut self.memory, entries).map_err(|e| e.to_string())
     }
 }

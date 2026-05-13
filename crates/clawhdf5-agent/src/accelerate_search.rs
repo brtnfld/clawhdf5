@@ -232,7 +232,7 @@ pub fn accelerate_batch_norms(vectors_flat: &[f32], dim: usize) -> Vec<f32> {
     for i in 0..n {
         let offset = i * dim;
         // SAFETY: cblas_snrm2 requires a valid pointer to f32 slice of length dim.
-    let norm = unsafe { cblas_snrm2(dim as i32, vectors_flat[offset..].as_ptr(), 1) };
+        let norm = unsafe { cblas_snrm2(dim as i32, vectors_flat[offset..].as_ptr(), 1) };
         norms.push(norm);
     }
 
