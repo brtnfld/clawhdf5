@@ -16,7 +16,12 @@ pub enum HsdsError {
     /// JSON parsing error.
     Json(serde_json::Error),
     /// Server returned an error response.
-    Server { status: u16, message: String },
+    Server {
+        /// HTTP status code returned by the HSDS server.
+        status: u16,
+        /// Error message from the server response body.
+        message: String,
+    },
     /// Data conversion error.
     DataError(String),
     /// I/O error.

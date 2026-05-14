@@ -11,21 +11,37 @@ pub use clawhdf5_format::file_writer::AttrValue;
 /// user-friendly representation.
 #[derive(Debug, Clone, PartialEq)]
 pub enum DType {
+    /// 32-bit IEEE 754 floating-point (`f32`).
     F32,
+    /// 64-bit IEEE 754 floating-point (`f64`).
     F64,
+    /// Signed 8-bit integer (`i8`).
     I8,
+    /// Signed 16-bit integer (`i16`).
     I16,
+    /// Signed 32-bit integer (`i32`).
     I32,
+    /// Signed 64-bit integer (`i64`).
     I64,
+    /// Unsigned 8-bit integer (`u8`).
     U8,
+    /// Unsigned 16-bit integer (`u16`).
     U16,
+    /// Unsigned 32-bit integer (`u32`).
     U32,
+    /// Unsigned 64-bit integer (`u64`).
     U64,
+    /// Fixed-length UTF-8 string.
     String,
+    /// Compound (struct) type with named fields and their respective types.
     Compound(Vec<(String, DType)>),
+    /// Enumeration type with named members.
     Enum(Vec<String>),
+    /// Fixed-size array of a base type with the given dimensions.
     Array(Box<DType>, Vec<u32>),
+    /// Variable-length UTF-8 string stored via a global heap reference.
     VariableLengthString,
+    /// Catch-all for HDF5 datatypes that do not map to a specific variant.
     Other(String),
 }
 

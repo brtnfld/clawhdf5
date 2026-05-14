@@ -417,7 +417,7 @@ impl<'f> Dataset<'f> {
 
     /// Read selected elements as raw bytes.
     ///
-    /// Only the elements matching the [`Selection`] are returned. For chunked
+    /// Only the elements matching the [`clawhdf5_format::selection::Selection`] are returned. For chunked
     /// datasets, only intersecting chunks are decompressed.
     pub fn read_selection(
         &self,
