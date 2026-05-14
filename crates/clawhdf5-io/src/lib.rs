@@ -170,7 +170,7 @@ impl HDF5Read for FileReader {
 /// File-backed writer that writes bytes to a file on disk.
 ///
 /// Optionally holds a [`PageInterceptor`] that is called once per page
-/// during [`write_all_bytes`].  When `page_size` is set and an interceptor
+/// during [`Self::write_all_bytes`].  When `page_size` is set and an interceptor
 /// is installed, the written bytes are sliced into pages and each page is
 /// forwarded to [`PageInterceptor::on_page_write`].
 pub struct FileWriter {
@@ -207,7 +207,7 @@ impl FileWriter {
 
     /// Install a [`PageInterceptor`] and set the page size used to slice writes.
     ///
-    /// When set, every call to [`write_all_bytes`] will invoke
+    /// When set, every call to [`Self::write_all_bytes`] will invoke
     /// [`PageInterceptor::on_page_write`] once for each aligned page.
     pub fn set_interceptor(&mut self, interceptor: Box<dyn PageInterceptor>, page_size: u32) {
         self.interceptor = Some(interceptor);

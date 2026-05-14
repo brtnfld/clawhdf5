@@ -328,7 +328,7 @@ impl<'f, R: HDF5Read> LazyDataset<'f, R> {
     ///
     /// Returns `Some(&[f64])` when the dataset is contiguous and stored as
     /// little-endian `f64` with proper alignment.  Returns `None` for
-    /// chunked/compact layouts or non-native types — use [`read_f64`] instead.
+    /// chunked/compact layouts or non-native types — use [`Self::read_f64`] instead.
     pub fn read_f64_zerocopy(&self) -> Result<Option<&'f [f64]>, Error> {
         let raw = match self.read_raw_ref()? {
             Some(s) => s,
