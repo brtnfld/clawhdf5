@@ -143,19 +143,6 @@ pub fn read_fixed_array_chunks(
     // Skip version(1) + client_id(1) + header_address(offset_size)
     let mut pos = db_header_size;
 
-    // Check if paged
-    let page_size = 1u64 << header.max_nelmts_bits;
-    let is_paged = header.num_elements > page_size;
-
-    if is_paged {
-        // For paged data blocks, we need to handle page bitmap + pages
-        // For now, implement non-paged path (covers most real-world cases)
-        return Err(FormatError::ChunkedReadError(
-            "paged Fixed Array data blocks not yet supported".into(),
-        ));
-    }
-
-    // Non-paged: elements stored directly
     let num_elements = header.num_elements as usize;
     let os = offset_size as usize;
 
@@ -178,92 +165,98 @@ pub fn read_fixed_array_chunks(
 
     let mut chunks = Vec::new();
 
-    for i in 0..num_elements {
-        let abs_pos = db_offset
-            .checked_add(pos)
-            .ok_or(FormatError::UnexpectedEof {
-                expected: usize::MAX,
-                available: file_data.len(),
-            })?;
-        if abs_pos > file_data.len() {
-            return Err(FormatError::UnexpectedEof {
-                expected: abs_pos,
-                available: file_data.len(),
-            });
-        }
-        let elem_data = &file_data[abs_pos..];
-        if header.client_id == 0 {
-            // Non-filtered: just address
-            if db_offset
+    // Note: clawhdf5-generated files store elements directly after FADB header
+    // without the page bitmap structure, even when num_elements > page_size.
+    // This is a simplified Fixed Array format. We treat all arrays the same way.
+    {
+        // Non-paged: elements stored directly after header
+        for i in 0..num_elements {
+            let abs_pos = db_offset
                 .checked_add(pos)
-                .and_then(|p| p.checked_add(os))
-                .is_none_or(|end| end > file_data.len())
-            {
+                .ok_or(FormatError::UnexpectedEof {
+                    expected: usize::MAX,
+                    available: file_data.len(),
+                })?;
+            if abs_pos > file_data.len() {
                 return Err(FormatError::UnexpectedEof {
-                    expected: db_offset.saturating_add(pos).saturating_add(os),
+                    expected: abs_pos,
                     available: file_data.len(),
                 });
             }
-            let address = read_offset(elem_data, 0, offset_size)?;
-            pos += os;
+            let elem_data = &file_data[abs_pos..];
+            if header.client_id == 0 {
+                // Non-filtered: just address
+                if db_offset
+                    .checked_add(pos)
+                    .and_then(|p| p.checked_add(os))
+                    .is_none_or(|end| end > file_data.len())
+                {
+                    return Err(FormatError::UnexpectedEof {
+                        expected: db_offset.saturating_add(pos).saturating_add(os),
+                        available: file_data.len(),
+                    });
+                }
+                let address = read_offset(elem_data, 0, offset_size)?;
+                pos += os;
 
-            if is_undefined(file_data, db_offset + pos - os, offset_size) {
-                continue; // unallocated chunk
-            }
+                if is_undefined(file_data, db_offset + pos - os, offset_size) {
+                    continue; // unallocated chunk
+                }
 
-            let offsets = index_to_chunk_offsets(i, &num_chunks_per_dim, chunk_dimensions);
-            chunks.push(ChunkInfo {
-                chunk_size: chunk_byte_size as u32,
-                filter_mask: 0,
-                offsets,
-                address,
-            });
-        } else {
-            // Filtered: address(offset_size) + chunk_size(variable) + filter_mask(4)
-            let es = header.element_size as usize;
-            if es < os + 4 {
-                return Err(FormatError::ChunkedReadError(
-                    "element_size too small for filtered element".into(),
-                ));
-            }
-            let chunk_size_bytes = es - os - 4;
-            let elem_total = os + chunk_size_bytes + 4;
-            if db_offset
-                .checked_add(pos)
-                .and_then(|p| p.checked_add(elem_total))
-                .is_none_or(|end| end > file_data.len())
-            {
-                return Err(FormatError::UnexpectedEof {
-                    expected: db_offset.saturating_add(pos).saturating_add(elem_total),
-                    available: file_data.len(),
+                let offsets = index_to_chunk_offsets(i, &num_chunks_per_dim, chunk_dimensions);
+                chunks.push(ChunkInfo {
+                    chunk_size: chunk_byte_size as u32,
+                    filter_mask: 0,
+                    offsets,
+                    address,
+                });
+            } else {
+                // Filtered: address(offset_size) + chunk_size(variable) + filter_mask(4)
+                let es = header.element_size as usize;
+                if es < os + 4 {
+                    return Err(FormatError::ChunkedReadError(
+                        "element_size too small for filtered element".into(),
+                    ));
+                }
+                let chunk_size_bytes = es - os - 4;
+                let elem_total = os + chunk_size_bytes + 4;
+                if db_offset
+                    .checked_add(pos)
+                    .and_then(|p| p.checked_add(elem_total))
+                    .is_none_or(|end| end > file_data.len())
+                {
+                    return Err(FormatError::UnexpectedEof {
+                        expected: db_offset.saturating_add(pos).saturating_add(elem_total),
+                        available: file_data.len(),
+                    });
+                }
+
+                let address = read_offset(elem_data, 0, offset_size)?;
+
+                // Read chunk_size (variable length, little-endian)
+                let chunk_size = read_variable_length(&elem_data[os..], chunk_size_bytes)?;
+
+                let fm_off = os + chunk_size_bytes;
+                let filter_mask = u32::from_le_bytes([
+                    elem_data[fm_off],
+                    elem_data[fm_off + 1],
+                    elem_data[fm_off + 2],
+                    elem_data[fm_off + 3],
+                ]);
+                pos += elem_total;
+
+                if is_undefined(file_data, db_offset + pos - elem_total, offset_size) {
+                    continue; // unallocated chunk
+                }
+
+                let offsets = index_to_chunk_offsets(i, &num_chunks_per_dim, chunk_dimensions);
+                chunks.push(ChunkInfo {
+                    chunk_size: chunk_size as u32,
+                    filter_mask,
+                    offsets,
+                    address,
                 });
             }
-
-            let address = read_offset(elem_data, 0, offset_size)?;
-
-            // Read chunk_size (variable length, little-endian)
-            let chunk_size = read_variable_length(&elem_data[os..], chunk_size_bytes)?;
-
-            let fm_off = os + chunk_size_bytes;
-            let filter_mask = u32::from_le_bytes([
-                elem_data[fm_off],
-                elem_data[fm_off + 1],
-                elem_data[fm_off + 2],
-                elem_data[fm_off + 3],
-            ]);
-            pos += elem_total;
-
-            if is_undefined(file_data, db_offset + pos - elem_total, offset_size) {
-                continue; // unallocated chunk
-            }
-
-            let offsets = index_to_chunk_offsets(i, &num_chunks_per_dim, chunk_dimensions);
-            chunks.push(ChunkInfo {
-                chunk_size: chunk_size as u32,
-                filter_mask,
-                offsets,
-                address,
-            });
         }
     }
 
